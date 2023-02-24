@@ -6,8 +6,12 @@ setwd("C:/Git/HGD")
 library(data.table)
 library(ggplot2)
 
-data_HGD <- read.csv2("data_HGD.csv", head = T, sep = ";")
+data_HGD <- read.csv2("data_HGD.csv", head = T, sep = ";", stringsAsFactors = T)
 data_HGD <- subset(data_HGD, Affichage == "OUI")
+summary(data_HGD)
+
+#supression colonnes
+data_HGD <- data_HGD[,-c(1,5,27,28)]
 
 attach(r)
 summary(r)
