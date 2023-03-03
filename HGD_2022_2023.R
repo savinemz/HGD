@@ -25,16 +25,26 @@ habitat <- habitat[,-4]
 summary(habitat)
 habitat <- st_transform(habitat,crs=3832)
 
-gg <- plot(code_18)
+gg <- plot(habitat$code_18)
 ggsave("Rplot/hab.png",gg)#marche pas
 
-habitat$area_poly <- st_area(habitat)
+#habitat$area_poly <- st_area(habitat)
+
+#calcul des surfaces totales par habitat
+area_hab <- aggregate(area_poly~habitat$code_18, habitat, sum)
+
+
+#calcul des surfaces par motu
+area_tot <- aggregate(habitat$area_poly, habitat, sum)
+names(area_motu)[2] <- "area_motu"
+rangi <- merge(rangi, area_motu, by = "id_motu")
 
 
 
 
 ### Data HGD ####
 data_HGD_original <- read.csv2("data_HGD.csv", head = T, sep = ";", stringsAsFactors = T)
+str(data_HGD_original)
 plot(data_HGD_original$Affichage)
 summary(data_HGD_original)
 
@@ -44,13 +54,18 @@ summary(data_HGD)
 data_HGD <- subset(data_HGD, Commentair != "Pas de coordonnées GPS")
 summary(data_HGD)
 
+
 #Nettoyage des données
-data_HGD <- data_HGD[,-c(1,5,27,28)]#device_id, datatype, Affichage, Commentair
+data_HGD <- data_HGD[,-c(1,2,5,27,28)]#device_id,UTC_dateti, datatype, Affichage, Commentair
+names(data_HGD)[24] <- "bird_id"
+data_HGD <- data_HGD %>% relocate(bird_id, .after = UTC_date)
+data_HGD <- data_HGD %>% relocate(UTC_date, .after = bird_id)
 summary(data_HGD)
-names(data_HGD)[25] <- "bird_id"
-data_HGD <- data_HGD %>% relocate(bird_id, .after = UTC_dateti)
-data_HGD <- data_HGD %>% relocate(UTC_dateti, .after = bird_id)
-summary(data_HGD)
+
+setDT(data_HGD)
+data_HGD[,UTC_date:= as.character(UTC_date)]
+data_HGD[,UTC_time:= as.character(UTC_time)]
+str(data_HGD)
 attach(data_HGD)
 
 plot(bird_id)
@@ -67,7 +82,6 @@ HGD_sf <- st_transform(HGD_sf,crs=3832)
 sum_loc <- st_intersection(habitat, HGD_sf)
 
 
-setDT(data_HGD)
 nb_data_HH <- data_HGD [,.(nb_data_HH = .N), by = .(bird_id, date_HH)]
 nb_data_HH[,nb_data_HH := as.numeric(nb_data_HH)]
 #bp <- boxplot (nb_data_HH$nb_data_HH ~ nb_data_HH$bird_id)
@@ -86,14 +100,16 @@ gg2
 
 
 
-#calcul des surfaces totales par habitat
-area_hab <- aggregate(area_poly~code_18, habitat, sum)
+### Tableau description donnees HGD ########################################
 
+library(data.table)
+sum_HGD <- data_HGD[,.(nb_data = .N,
+                              first = min(UTC_date),
+                              last = max(UTC_date)), by =.(bird_id)] # par oiseau: combien de donnees, premiere date et derniere date
 
-#calcul des surfaces par motu
-area_tot <- aggregate(habitat$area_poly, habitat, sum)
-names(area_motu)[2] <- "area_motu"
-rangi <- merge(rangi, area_motu, by = "id_motu")
+sum_HGD[,duration_days := difftime(last, first, unit = "days")]#difference de temps entre la premiere et la derniere donnee. le ":=" veut dire pas de regroupement
 
-
-
+nb_day <- data_HGD [,.(j = 1), by = .(bird_id, UTC_date)] # regroupement par oiseau et par date
+nb_day <- nb_day [,.(nb_day= .N), by = .(bird_id)] # nombre de jour de données 
+sum_HGD <- merge(sum_HGD, nb_day, bx = "bird_id")
+#fwrite(sum_HGD, "table/sum_HGD_OrniTrack.csv")
