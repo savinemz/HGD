@@ -63,7 +63,7 @@ data_HGD$datej <- substr(data_HGD$UTC_date,1,2)
 data_HGD$datem <- substr(data_HGD$UTC_date,4,5)
 data_HGD$datea <- substr(data_HGD$UTC_date,7,8)
 data_HGD$datea2 <- substr(data_HGD$UTC_date,9,10)
-data_HGD$date <- paste0(data_HGD$datej, "-", data_HGD$datem, "-", data_HGD$datea, "", data_HGD$datea2)
+data_HGD$date <- paste0(data_HGD$datea,"", data_HGD$datea2,"-",data_HGD$datem, "-", data_HGD$datej)
 data_HGD <- data_HGD %>% relocate(date, .after = bird_id)
 data_HGD[,date:= as.character(date)]
 data_HGD[,time:= as.character(time)]
