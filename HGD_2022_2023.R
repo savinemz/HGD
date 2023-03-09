@@ -20,18 +20,35 @@ setwd("C:/Git/HGD")
 
 
 ### Data Habitat ####
+
+#calculs des surfaces par polygones
 habitat <- st_read("SIG/CLC_HDF_2018.shx", stringsAsFactors = T)
-habitat <- habitat[,-4]
+habitat <- habitat[,-c(1,2,4,6)]
 summary(habitat)
 habitat <- st_transform(habitat,crs=3832)
+habitat$area_poly <- st_area(habitat)
+
+#identifiant des polygones
+habitat$id_poly <- 1: nrow(habitat)
+habitat <- habitat %>% relocate(id_poly, .after = code_18)
 
 gg <- plot(habitat$code_18)
 #ggsave("Rplot/hab.png",gg)
 
-habitat$area_poly <- st_area(habitat)
 
 #calcul des surfaces totales par habitat
-area_hab <- aggregate(area_poly~habitat$code_18, habitat, sum)
+area_hab_HDF <- aggregate(area_poly~habitat$code_18, habitat, sum)
+names(area_hab_HDF)[1] <- "code_18"
+names(area_hab_HDF)[2] <- "area_tot_hab"
+area_tot <- sum(area_hab_HDF$area_tot_hab)
+
+#proportion des habitats en HDF
+area_hab_HDF$proportion <- (area_hab_HDF$area_tot_hab/area_tot)
+sum(area_hab_HDF$proportion)
+ggprop <- plot(area_hab_HDF$proportion~area_hab_HDF$code_18)
+habitat <- merge(habitat, area_hab_HDF, by = "code_18")
+habitat <- habitat %>% relocate(code_18, .after = id_poly)
+
 
 
 
@@ -43,9 +60,12 @@ str(data_HGD_original)
 #Nettoyage des données
 #Suppression des data ayant des problemes d'affichage
 plot(data_HGD_original$Affichage)
+
 data_HGD <- subset(data_HGD_original, Affichage != "NON") # j'enlève tous les NON
 data_HGD <- subset(data_HGD, Commentair != "Pas de coordonnées GPS") #j'enleve tous les "Pas de coordonnées GPS"
 summary(data_HGD)
+
+plot(data_HGD$day_night)
 
 #Suppression des colonnes inutiles + Renommer certaines colonnes
 data_HGD <- data_HGD[,-c(1,2,5,27,28)] # supression colonnes device_id,UTC_dateti, datatype, Affichage, Commentair
@@ -85,6 +105,9 @@ HGD_sf <- st_transform(HGD_sf,crs=3832)
 sum_loc <- st_intersection(habitat, HGD_sf)
 
 
+
+#nombre de donnes par heure par oiseau pour expliquer le choix des heures
+setDT(data_HGD)
 nb_data_HH <- data_HGD [,.(nb_data_HH = .N), by = .(bird_id, date_HH)]
 nb_data_HH[,nb_data_HH := as.numeric(nb_data_HH)]
 #bp <- boxplot (nb_data_HH$nb_data_HH ~ nb_data_HH$bird_id)
@@ -113,7 +136,22 @@ sum_HGD[,duration_days := difftime(last, first, unit = "days")]#difference de te
 nb_day <- data_HGD [,.(j = 1), by = .(bird_id, date)] # regroupement par oiseau et par date
 nb_day <- nb_day [,.(nb_day= .N), by = .(bird_id)] # nombre de jour de données 
 sum_HGD <- merge(sum_HGD, nb_day, bx = "bird_id")
-#fwrite(sum_HGD, "table/sum_HGD_OrniTrack.csv")
+#fwrite(sum_HGD, "table/sum_HGD_OrniTrack.csv") #deja enregistre
+
+#nombre de donnees par oiseau par J/N
+sum_HGD_daynight <- data_HGD[,.(nb_data = .N), by =.(bird_id, day_night)]
+fwrite(sum_HGD_daynight, "table/sum_courlis_daynight.csv")
+
+
+#stat sur les donnees par heure par oiseau
+#nombre de donnees par oiseau et par jour et par heure
+#nb_data_j <- loc_courlis [,.(nb_data_jour = .N), by = .(bird_id, date, date_HH)]
+
+#mean_data_j <- mean(nb_data_j$nb_data_jour)# moyenne du nombre de donnees par heure = 2 en arrondissant
+#min_data_j <- min(nb_data_j$nb_data_jour)# le plus petit nombre de donnees par heure = 1
+#max_data_j <- max(nb_data_j$nb_data_jour)# le plus grand nombre de donnees par heure = 4
+
+
 
 ### figure nombre de donnees par oiseau par jour par J/N ##########################################################################################################
 
