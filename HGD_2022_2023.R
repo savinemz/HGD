@@ -170,3 +170,59 @@ gg <- gg + labs(x= "week", y= "number of localisation per week")
 gg
 #ggsave("Rplot/OrniTrack/nb_data_daynight.png",gg)
 
+boxplot(Altitude_m~bird_id)
+
+
+
+#stat sur les donnees sum_HGD
+nb_data_tot <- sum(sum_HGD$nb_data)# 36288 donnees
+
+median_nb_data <- median(sum_HGD$nb_data)# mediane du nombre de data par oiseau = 191
+mean_nb_data <- mean(sum_HGD$nb_data)# nombre moyen de data par oiseau = 2969,5
+min_nb_data <- min(sum_HGD$nb_data) # le plus petit nombre de data = 1259
+max_nb_data <- max(sum_HGD$nb_data) # le plus grand nombre de data = 5246
+
+min_data_date <- min(sum_HGD$last)# la plus petite periode d'emission pour une balise = 2022_08_28 = 3 mois max par Glageon Bocahut
+max_data_date <- max(sum_HGD$last)# la plus grande periode d'emission pour une balise = 2023_02_12 = 6 mois max par loos A,loos B,quelmes,Germignie b
+
+
+
+
+
+
+
+
+## Utilisation du paysage par les oiseaux ##########################################################################################################
+
+### Comparaison des habitats composant les motus occupes et non occupes ###################################################################################################
+
+# regroupement du nombre d'occurence par polygone, par oiseau, par jour et par heure
+setDT(sum_loc)
+sum_loc_poly <- sum_loc[,.(occurence = .N),by=.(id_poly,bird_id)][,.(occurence = .N),by=.(id_poly)]
+
+habitat <- merge(habitat, sum_loc_poly, bx = "id_poly", all.x = T)
+habitat$occurence[is.na(habitat$occurence)] <- 0
+habitat <- habitat %>% relocate(occurence, .after = code_18)
+
+
+#création data.table pour d_gg
+habitat_DT <- habitat
+setDT(habitat_DT)
+habitat_DT[,occupation := occurence>0]
+
+#creation d'un tableau a partir de rangi_DT
+habitat_DT[,proportion := as.numeric(proportion)]
+d_gg <- habitat_DT[,.(prop_mean = mean(proportion),prop_med = median(proportion),inf95 = quantile(proportion, 0.025),sup95 = quantile(proportion, 0.975)), by=.(code_18,occupation)]
+
+
+
+# Figure comparaison des habitats composant les motus occupes et non occupes
+library(ggplot2); library(units)
+gg <- ggplot(data = d_gg, aes(x = code_18, y = prop_mean,fill = occupation,colour=occupation,group=occupation))
+gg <- gg + geom_errorbar(aes(ymin = inf95, ymax = sup95),width = 0.5,alpha=.5,size=1)
+gg <- gg +  geom_point(alpha=.8,size=2)
+gg <- gg + labs(y = "Proportion mean", x = "Habitats")
+gg
+#ggsave("Rplot/prop_mean.png",gg)
+
+
