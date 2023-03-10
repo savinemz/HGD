@@ -65,7 +65,6 @@ data_HGD <- subset(data_HGD_original, Affichage != "NON") # j'enlève tous les N
 data_HGD <- subset(data_HGD, Commentair != "Pas de coordonnées GPS") #j'enleve tous les "Pas de coordonnées GPS"
 summary(data_HGD)
 
-plot(data_HGD$day_night)
 
 #Suppression des colonnes inutiles + Renommer certaines colonnes
 data_HGD <- data_HGD[,-c(1,2,5,27,28)] # supression colonnes device_id,UTC_dateti, datatype, Affichage, Commentair
@@ -140,16 +139,16 @@ sum_HGD <- merge(sum_HGD, nb_day, bx = "bird_id")
 
 #nombre de donnees par oiseau par J/N
 sum_HGD_daynight <- data_HGD[,.(nb_data = .N), by =.(bird_id, day_night)]
-fwrite(sum_HGD_daynight, "table/sum_courlis_daynight.csv")
+#fwrite(sum_HGD_daynight, "table/sum_HGD_daynight.csv") #deja enregistre
 
 
 #stat sur les donnees par heure par oiseau
 #nombre de donnees par oiseau et par jour et par heure
-#nb_data_j <- loc_courlis [,.(nb_data_jour = .N), by = .(bird_id, date, date_HH)]
+#nb_data_j <- data_HGD [,.(nb_data_jour = .N), by = .(bird_id, date, date_HH)]
 
-#mean_data_j <- mean(nb_data_j$nb_data_jour)# moyenne du nombre de donnees par heure = 2 en arrondissant
+#mean_data_j <- mean(nb_data_j$nb_data_jour)# moyenne du nombre de donnees par heure = 1,38
 #min_data_j <- min(nb_data_j$nb_data_jour)# le plus petit nombre de donnees par heure = 1
-#max_data_j <- max(nb_data_j$nb_data_jour)# le plus grand nombre de donnees par heure = 4
+#max_data_j <- max(nb_data_j$nb_data_jour)# le plus grand nombre de donnees par heure = 13
 
 
 
