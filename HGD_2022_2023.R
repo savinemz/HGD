@@ -244,13 +244,13 @@ habitat_DT <- habitat
 setDT(habitat_DT)
 habitat_DT[,occupation := occurence>0]
 
-#creation d'un tableau a partir de rangi_DT
+#creation d'un tableau a partir de habitat_DT
 habitat_DT[,proportion := as.numeric(proportion)]
 d_gg <- habitat_DT[,.(prop_mean = mean(proportion),prop_med = median(proportion),inf95 = quantile(proportion, 0.025),sup95 = quantile(proportion, 0.975)), by=.(code_18,occupation)]
 
 
 
-# Figure comparaison des habitats composant les motus occupes et non occupes
+# Figure comparaison des habitats composant les polygones occupes et non occupes
 library(ggplot2); library(units)
 gg <- ggplot(data = d_gg, aes(x = code_18, y = prop_mean,fill = occupation,colour=occupation,group=occupation))
 gg <- gg + geom_errorbar(aes(ymin = inf95, ymax = sup95),width = 0.5,alpha=.5,linewidth =1)
