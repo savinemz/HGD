@@ -23,14 +23,36 @@ setwd("C:/Git/HGD")
 
 #calculs des surfaces par polygones
 habitat <- st_read("SIG/CLC_HDF_2018.shx", stringsAsFactors = T)
-habitat <- habitat[,-c(1,2,4,6)]
-summary(habitat)
-habitat <- st_transform(habitat,crs=3832)
+habitat <- habitat[,-c(1,2,4,6)]# colonne non utilise
+habitat <- st_transform(habitat,crs=3832)#transformation des donnees
 habitat$area_poly <- st_area(habitat)
+summary(habitat)
 
 #identifiant des polygones
 habitat$id_poly <- 1: nrow(habitat)
 habitat <- habitat %>% relocate(id_poly, .after = code_18)
+
+
+#suppression des habitats non utilise par le HGD
+habitat <- subset(habitat, habitat$code_18 != "111")
+habitat <- subset(habitat, habitat$code_18 != "122")
+habitat <- subset(habitat, habitat$code_18 != "123")
+habitat <- subset(habitat, habitat$code_18 != "124")
+habitat <- subset(habitat, habitat$code_18 != "133")
+habitat <- subset(habitat, habitat$code_18 != "141")
+habitat <- subset(habitat, habitat$code_18 != "221")
+habitat <- subset(habitat, habitat$code_18 != "222")
+habitat <- subset(habitat, habitat$code_18 != "321")
+habitat <- subset(habitat, habitat$code_18 != "331")
+habitat <- subset(habitat, habitat$code_18 != "333")
+habitat <- subset(habitat, habitat$code_18 != "412")
+habitat <- subset(habitat, habitat$code_18 != "421")
+habitat <- subset(habitat, habitat$code_18 != "423")
+habitat <- subset(habitat, habitat$code_18 != "511")
+habitat <- subset(habitat, habitat$code_18 != "521")
+habitat <- subset(habitat, habitat$code_18 != "522")
+habitat <- subset(habitat, habitat$code_18 != "523")
+
 
 gg <- plot(habitat$code_18)
 #ggsave("Rplot/hab.png",gg)
@@ -40,14 +62,23 @@ gg <- plot(habitat$code_18)
 area_hab_HDF <- aggregate(area_poly~habitat$code_18, habitat, sum)
 names(area_hab_HDF)[1] <- "code_18"
 names(area_hab_HDF)[2] <- "area_tot_hab"
-area_tot <- sum(area_hab_HDF$area_tot_hab)
 
-#proportion des habitats en HDF
-area_hab_HDF$proportion <- (area_hab_HDF$area_tot_hab/area_tot)
+#calcul de l'aire totale (meme calcul pour les deux lignes)
+area_HDF <- sum(area_hab_HDF$area_tot_hab)
+area_HDF_poly <- sum(habitat$area_poly)
+
+
+#proportion par habitat en HDF
+area_hab_HDF$proportion <- (area_hab_HDF$area_tot_hab/area_HDF)
 sum(area_hab_HDF$proportion)
 ggprop <- plot(area_hab_HDF$proportion~area_hab_HDF$code_18)
-habitat <- merge(habitat, area_hab_HDF, by = "code_18")
+
+#proportion des habitats par polygone en HDF
+#on aimerait savoir si le HGD utilise des petits polygone d'habitat ou plutot des grands polygones d'habitat en region de France
+habitat$proportion <- (habitat$area_poly/area_HDF)
+sum(habitat$proportion)
 habitat <- habitat %>% relocate(code_18, .after = id_poly)
+
 
 
 
@@ -60,7 +91,6 @@ str(data_HGD_original)
 #Nettoyage des données
 #Suppression des data ayant des problemes d'affichage
 plot(data_HGD_original$Affichage)
-
 data_HGD <- subset(data_HGD_original, Affichage != "NON") # j'enlève tous les NON
 data_HGD <- subset(data_HGD, Commentair != "Pas de coordonnées GPS") #j'enleve tous les "Pas de coordonnées GPS"
 summary(data_HGD)
@@ -68,7 +98,7 @@ summary(data_HGD)
 
 #Suppression des colonnes inutiles + Renommer certaines colonnes
 data_HGD <- data_HGD[,-c(1,2,5,27,28)] # supression colonnes device_id,UTC_dateti, datatype, Affichage, Commentair
-names(data_HGD)[24] <- "bird_id"
+names(data_HGD)[24] <- "bird_id" #(les oiseaux avec une balise portent le nom du lieu_dit ou ils ont ete bague + balise)
 data_HGD <- data_HGD %>% relocate(bird_id, .after = UTC_date)
 data_HGD <- data_HGD %>% relocate(UTC_date, .after = bird_id)
 names(data_HGD)[3] <- "time"
@@ -76,7 +106,7 @@ names(data_HGD)[21] <- "day_night"
 summary(data_HGD)
 
 
-#creation d'une colonne date avec separateur virgule
+#creation d'une colonne date au format aaaa-mm-jj(cuisine a la maniere de savine :) )
 setDT(data_HGD)
 data_HGD$datej <- substr(data_HGD$UTC_date,1,2)
 data_HGD$datem <- substr(data_HGD$UTC_date,4,5)
@@ -101,6 +131,8 @@ data_HGD$date_HH <- paste0(data_HGD$date, "_", data_HGD$heure_HH)
 HGD_sf <- st_as_sf(data_HGD, coords = c("Longitude","Latitude"))
 st_crs(HGD_sf) <- 4326
 HGD_sf <- st_transform(HGD_sf,crs=3832)
+
+#Assemblage des couches habitats + points GPS HGD
 sum_loc <- st_intersection(habitat, HGD_sf)
 
 
@@ -112,7 +144,7 @@ nb_data_HH[,nb_data_HH := as.numeric(nb_data_HH)]
 #bp <- boxplot (nb_data_HH$nb_data_HH ~ nb_data_HH$bird_id)
 
 
-# figure nombre de données par heure par oiseaux
+# figure nombre de donnees par heure par oiseaux
 library(ggplot2)
 gg <- ggplot(nb_data_HH,aes(x=nb_data_HH,y=bird_id)) + geom_violin()
 gg <- gg + labs(y = "Bird_id", x = "Number of data per hour")
@@ -170,7 +202,9 @@ gg <- gg + labs(x= "week", y= "number of localisation per week")
 gg
 #ggsave("Rplot/OrniTrack/nb_data_daynight.png",gg)
 
-boxplot(Altitude_m~bird_id)
+
+boxplot(Altitude_m~bird_id)# a voir comment retravailler ce graph
+#une etude sur l'altitude des HGD et le positionnement des champs eoliens serait interessantes
 
 
 
@@ -198,7 +232,7 @@ max_data_date <- max(sum_HGD$last)# la plus grande periode d'emission pour une b
 
 # regroupement du nombre d'occurence par polygone, par oiseau, par jour et par heure
 setDT(sum_loc)
-sum_loc_poly <- sum_loc[,.(occurence = .N),by=.(id_poly,bird_id)][,.(occurence = .N),by=.(id_poly)]
+sum_loc_poly <- sum_loc[,.(occurence = .N),by=.(id_poly,bird_id,date_HH)][,.(occurence = .N),by=.(id_poly)]
 
 habitat <- merge(habitat, sum_loc_poly, bx = "id_poly", all.x = T)
 habitat$occurence[is.na(habitat$occurence)] <- 0
@@ -219,7 +253,7 @@ d_gg <- habitat_DT[,.(prop_mean = mean(proportion),prop_med = median(proportion)
 # Figure comparaison des habitats composant les motus occupes et non occupes
 library(ggplot2); library(units)
 gg <- ggplot(data = d_gg, aes(x = code_18, y = prop_mean,fill = occupation,colour=occupation,group=occupation))
-gg <- gg + geom_errorbar(aes(ymin = inf95, ymax = sup95),width = 0.5,alpha=.5,size=1)
+gg <- gg + geom_errorbar(aes(ymin = inf95, ymax = sup95),width = 0.5,alpha=.5,linewidth =1)
 gg <- gg +  geom_point(alpha=.8,size=2)
 gg <- gg + labs(y = "Proportion mean", x = "Habitats")
 gg
