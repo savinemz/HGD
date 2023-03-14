@@ -121,6 +121,10 @@ str(data_HGD)
 
 attach(data_HGD)
 plot(bird_id)
+boxplot(data_HGD$hdop)
+summary(data_HGD$hdop)
+boxplot(data_HGD$satcount, notch = T)
+summary(data_HGD$satcount)
 
 
 ## ajout de la colonne date et la colonne heure manuellement
