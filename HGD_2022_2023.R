@@ -119,6 +119,25 @@ data_HGD[,time:= as.character(time)]
 data_HGD <- data_HGD[,-c(3,27,28,29,30)]
 str(data_HGD)
 
+#creation colonne dispersion/dependance alimentaire par bird_id
+
+for(i in 1:153){
+  A<- sum(rangi$area_poly [rangi$id_motu == i])
+  
+  area_motu [i]<-A
+}
+
+
+
+data_HGD_DT <- data_HGD
+setDT(data_HGD_DT)
+data_HGD_DT %>% group_by(bird_id)
+
+
+
+
+
+
 attach(data_HGD)
 plot(bird_id)
 boxplot(data_HGD$hdop)
