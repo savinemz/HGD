@@ -96,6 +96,7 @@ data_HGD <- subset(data_HGD, Commentair != "Pas de coordonnées GPS") #j'enleve 
 summary(data_HGD)
 
 
+
 #Suppression des colonnes inutiles + Renommer certaines colonnes
 data_HGD <- data_HGD[,-c(1,2,5,27,28)] # supression colonnes device_id,UTC_dateti, datatype, Affichage, Commentair
 names(data_HGD)[24] <- "bird_id" #(les oiseaux avec une balise portent le nom du lieu_dit ou ils ont ete bague + balise)
@@ -105,6 +106,8 @@ names(data_HGD)[3] <- "time"
 names(data_HGD)[21] <- "day_night"
 summary(data_HGD)
 
+plot(data_HGD$Quinzaine)
+boxplot(data_HGD$temperatur)
 
 #creation d'une colonne date au format aaaa-mm-jj(cuisine a la maniere de savine :) )
 setDT(data_HGD)
@@ -120,22 +123,24 @@ data_HGD <- data_HGD[,-c(3,27,28,29,30)]
 str(data_HGD)
 
 #creation colonne dispersion/dependance alimentaire par bird_id
-
-for(i in 1:153){
-  A<- sum(rangi$area_poly [rangi$id_motu == i])
-  
-  area_motu [i]<-A
-}
+data_depart <- read.csv("Date_de_depart.csv", head = T, sep = ";", stringsAsFactors = T)
+data_HGD <- merge(data_HGD, data_depart, by = "bird_id")
+data_HGD <- data_HGD %>% relocate(date_depart, .after = time)
 
 
+#creation boucle pour separer les donnees dependance alimentaire/dispersion en fonction du jour de depart de chaque oiseau
+HGD_DT <- data_HGD[,-c(1,3,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26)]
+setDT(HGD_DT)
+periode <- ifelse(as.Date(HGD_DT$date) < as.Date(HGD_DT$date_depart), "Dépendance alimentaire", "Dispersion")
+HGD_periode <- cbind(HGD_DT,periode)
+data_HGD <- merge(data_HGD, HGD_periode, by = "date_depart", allow.cartesian = T) #ne fonctionne pas
 
-data_HGD_DT <- data_HGD
-setDT(data_HGD_DT)
-data_HGD_DT %>% group_by(bird_id)
-
-
-
-
+#distance entre deux points
+library(geosphere)
+p1 <- c(6.35,45.6)
+p2 <- c(6.32,45.7)
+distGeo(p1,p2)    ## 11357.8
+distCosine(p1,p2) ## 11374.1
 
 
 attach(data_HGD)
