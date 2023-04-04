@@ -122,26 +122,117 @@ data_HGD[,time:= as.character(time)]
 data_HGD <- data_HGD[,-c(3,27,28,29,30)]
 str(data_HGD)
 
-#creation colonne dispersion/dependance alimentaire par bird_id
+
+#selection des satcount = nombre de satellite = fiabilite du point (minimum 8)
+data_HGD <- subset(data_HGD, data_HGD$satcount != "0")
+data_HGD <- subset(data_HGD, data_HGD$satcount != "1")
+data_HGD <- subset(data_HGD, data_HGD$satcount != "2")
+data_HGD <- subset(data_HGD, data_HGD$satcount != "3")
+data_HGD <- subset(data_HGD, data_HGD$satcount != "4")
+data_HGD <- subset(data_HGD, data_HGD$satcount != "5")
+data_HGD <- subset(data_HGD, data_HGD$satcount != "6")
+data_HGD <- subset(data_HGD, data_HGD$satcount != "7")
+plot(data_HGD$satcount)
+boxplot(data_HGD$satcount)
+
+#selection des hdop = précision vur l'horizontalite du point (0,8 < hdop < 1.3)
+#plus le hdop est proche de 1 mieux c'est
+data_HGD <- subset(data_HGD, data_HGD$hdop != "0")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "0.5")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "0.6")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "0.600000024")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "0.699999988")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "0.7")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "1.399999976")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "1.4")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "1.5")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "1.6")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "1.600000024")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "1.7")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "1.700000048")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "1.799999952")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "1.8")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "1.899999976")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "1.9")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "2")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "2.1")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "2.2")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "2.200000048")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "2.299999952")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "2.3")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "2.4")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "2.400000095")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "2.5")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "2.6")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "2.7")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "2.8")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "2.9")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "3")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "3.1")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "3.2")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "3.3")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "3.4")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "3.5")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "3.6")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "3.7")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "3.8")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "3.9")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "4.1")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "4.2")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "4.3")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "4.4")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "4.5")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "4.6")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "4.7")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "4.8")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "5")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "5.1")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "5.3")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "5.4")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "5.5")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "5.7")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "5.8")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "5.9")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "6.6")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "6.8")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "6.9")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "7.3")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "7.900000095")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "10.1")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "12.5")
+data_HGD <- subset(data_HGD, data_HGD$hdop != "15.1")
+boxplot(data_HGD$hdop)
+summary(data_HGD$hdop)
+
+
+#importation des donnees sur le jour de depart de chaque oiseau
 data_depart <- read.csv("Date_de_depart.csv", head = T, sep = ";", stringsAsFactors = T)
 data_HGD <- merge(data_HGD, data_depart, by = "bird_id")
 data_HGD <- data_HGD %>% relocate(date_depart, .after = time)
 
 
+#creation colonne dispersion/dependance alimentaire par bird_id
 #creation boucle pour separer les donnees dependance alimentaire/dispersion en fonction du jour de depart de chaque oiseau
 HGD_DT <- data_HGD[,-c(1,3,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26)]
 setDT(HGD_DT)
 periode <- ifelse(as.Date(HGD_DT$date) < as.Date(HGD_DT$date_depart), "Dépendance alimentaire", "Dispersion")
-HGD_periode <- cbind(HGD_DT,periode)
-data_HGD <- merge(data_HGD, HGD_periode, by = "date_depart", allow.cartesian = T) #ne fonctionne pas
+data_HGD <- cbind(data_HGD,periode)
+data_HGD <- data_HGD %>% relocate(periode, .after = date_depart)
+
 
 #distance entre deux points
 library(geosphere)
+HGD_DT_Dist <- data_HGD[,-c(1,2,3,4,5,6,7,8,9,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26)]
+HGD_DT_Dist <- HGD_DT_Dist %>% relocate(Latitude, .after = Longitude)
 p1 <- c(6.35,45.6)
 p2 <- c(6.32,45.7)
 distGeo(p1,p2)    ## 11357.8
 distCosine(p1,p2) ## 11374.1
 
+distGeo(p1,p2)
+
+dist_mat <- distm(HGD_DT_Dist, fun = distGeo)
+dist_mat
 
 attach(data_HGD)
 plot(bird_id)
