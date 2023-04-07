@@ -83,6 +83,13 @@ habitat <- habitat %>% relocate(code_18, .after = id_poly)
 
 
 
+
+
+
+
+
+
+
 ### Data HGD ####
 data_HGD_original <- read.csv2("data_HGD.csv", head = T, sep = ";", stringsAsFactors = T)
 str(data_HGD_original)
@@ -102,6 +109,7 @@ data_HGD <- data_HGD[,-c(1,2,5,27,28)] # supression colonnes device_id,UTC_datet
 names(data_HGD)[24] <- "bird_id" #(les oiseaux avec une balise portent le nom du lieu_dit ou ils ont ete bague + balise)
 data_HGD <- data_HGD %>% relocate(bird_id, .after = UTC_date)
 data_HGD <- data_HGD %>% relocate(UTC_date, .after = bird_id)
+data_HGD <- data_HGD %>% relocate(Latitude, .after = Longitude)
 names(data_HGD)[3] <- "time"
 names(data_HGD)[21] <- "day_night"
 summary(data_HGD)
@@ -134,6 +142,7 @@ data_HGD <- subset(data_HGD, data_HGD$satcount != "6")
 data_HGD <- subset(data_HGD, data_HGD$satcount != "7")
 plot(data_HGD$satcount)
 boxplot(data_HGD$satcount)
+summary(data_HGD)
 
 #selection des hdop = précision vur l'horizontalite du point (0,8 < hdop < 1.3)
 #plus le hdop est proche de 1 mieux c'est
@@ -201,6 +210,7 @@ data_HGD <- subset(data_HGD, data_HGD$hdop != "7.900000095")
 data_HGD <- subset(data_HGD, data_HGD$hdop != "10.1")
 data_HGD <- subset(data_HGD, data_HGD$hdop != "12.5")
 data_HGD <- subset(data_HGD, data_HGD$hdop != "15.1")
+plot(data_HGD$hdop)
 boxplot(data_HGD$hdop)
 summary(data_HGD$hdop)
 
@@ -220,36 +230,27 @@ data_HGD <- cbind(data_HGD,periode)
 data_HGD <- data_HGD %>% relocate(periode, .after = date_depart)
 
 
-#distance entre deux points
-library(geosphere)
-HGD_DT_Dist <- data_HGD[,-c(1,2,3,4,5,6,7,8,9,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26)]
-HGD_DT_Dist <- HGD_DT_Dist %>% relocate(Latitude, .after = Longitude)
-p1 <- c(6.35,45.6)
-p2 <- c(6.32,45.7)
-distGeo(p1,p2)    ## 11357.8
-distCosine(p1,p2) ## 11374.1
-
-distGeo(p1,p2)
-
-dist_mat <- distm(HGD_DT_Dist, fun = distGeo)
-dist_mat
-
-attach(data_HGD)
-plot(bird_id)
-boxplot(data_HGD$hdop)
-summary(data_HGD$hdop)
-boxplot(data_HGD$satcount, notch = T)
-summary(data_HGD$satcount)
-
-
 ## ajout de la colonne date et la colonne heure manuellement
 data_HGD$heure_HH <- substr(data_HGD$time,1,2)
 data_HGD$date_HH <- paste0(data_HGD$date, "_", data_HGD$heure_HH)
 
 # Transformation des coordonnees en donnees spatiales + modification de la projection
-HGD_sf <- st_as_sf(data_HGD, coords = c("Longitude","Latitude"))
-st_crs(HGD_sf) <- 4326
-HGD_sf <- st_transform(HGD_sf,crs=3832)
+#HGD_sf <- st_as_sf(data_HGD, coords = c("Longitude","Latitude"))
+#st_crs(HGD_sf) <- 4326
+#HGD_sf <- st_transform(HGD_sf,crs=3832)
+
+#distance entre deux points
+library(maps)#package map je crois
+
+HGD_DT_Dist <- data_HGD[,-c(4,5,6,7,8,9,10,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27)]
+setDT(HGD_DT_Dist)
+HGD_DT_Dist <- HGD_DT_Dist[order(bird_id, date_HH),]
+HGD_DT_Dist <- st_as_sf(HGD_DT_Dist, crs = 4326L, coords = c("Longitude", "Latitude"))
+HGD_DT_Dist <- HGD_DT_Dist %>% group_by(bird_id) %>%
+  mutate(
+    lead = geometry[row_number() + 1],
+    dist = st_distance(geometry, lead, by_element = T),)
+
 
 #Assemblage des couches habitats + points GPS HGD
 sum_loc <- st_intersection(habitat, HGD_sf)
