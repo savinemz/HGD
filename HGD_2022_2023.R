@@ -22,16 +22,19 @@ setwd("C:/Git/HGD")
 ### Data Habitat ####
 
 #calculs des surfaces par polygones
-habitat <- st_read("SIG/CLC_HDF_2018.shx", stringsAsFactors = T)
-habitat <- habitat[,-c(1,2,4,6)]# colonne non utilise
-habitat <- st_transform(habitat,crs=3832)#transformation des donnees
-habitat$area_poly <- st_area(habitat)
-summary(habitat)
+CLC <- st_read("SIG/CLC_HDF_2018.shx", stringsAsFactors = T)
+CLC_code <- read.csv2("code_habitat.csv", head = T, sep = ";", stringsAsFactors = T)
+CLC <- CLC[,-c(1,2,4,6)]# colonne non utilise
+CLC <- merge(CLC, CLC_code, by = "code_18")
+CLC <- st_transform(CLC,crs=3832)#transformation des donnees
+CLC$area_poly <- st_area(CLC)
+summary(CLC)
 
 #identifiant des polygones
-habitat$id_poly <- 1: nrow(habitat)
-habitat <- habitat %>% relocate(id_poly, .after = code_18)
-
+CLC$id_poly <- 1: nrow(CLC)
+CLC <- CLC %>% relocate(id_poly, .after = area_ha)
+CLC <- CLC %>% relocate(code_18, .after = habitat)
+CLC <- CLC %>% relocate(area_ha, .after = area_poly)
 
 #suppression des habitats non utilise par le HGD
 habitat <- subset(habitat, habitat$code_18 != "111")
@@ -54,30 +57,54 @@ habitat <- subset(habitat, habitat$code_18 != "522")
 habitat <- subset(habitat, habitat$code_18 != "523")
 
 
-gg <- plot(habitat$code_18)
+gg <- plot(CLC$code_18)
+gg <- plot(CLC$habitat)
 #ggsave("Rplot/hab.png",gg)
 
 
-#calcul des surfaces totales par habitat
-area_hab_HDF <- aggregate(area_poly~habitat$code_18, habitat, sum)
+#calcul des surfaces totales par code_18
+area_hab_HDF <- aggregate(area_poly~CLC$code_18, CLC, sum)
 names(area_hab_HDF)[1] <- "code_18"
 names(area_hab_HDF)[2] <- "area_tot_hab"
 
 #calcul de l'aire totale (meme calcul pour les deux lignes)
 area_HDF <- sum(area_hab_HDF$area_tot_hab)
-area_HDF_poly <- sum(habitat$area_poly)
+area_HDF_poly <- sum(CLC$area_poly)
+
+
+#proportion par code_18 en HDF
+area_hab_HDF$proportion <- (area_hab_HDF$area_tot_hab/area_HDF)
+sum(area_hab_HDF$proportion)
+CLC <- merge(CLC, area_hab_HDF, by = "code_18")
+ggprop <- plot(area_hab_HDF$proportion~area_hab_HDF$code_18)
+
+
+
+
+
+
+
+#calcul des surfaces totales par habitat
+area_hab_HDF <- aggregate(area_poly~CLC$habitat, CLC, sum)
+names(area_hab_HDF)[1] <- "habitat"
+names(area_hab_HDF)[2] <- "area_tot_hab"
+
+#calcul de l'aire totale (meme calcul pour les deux lignes)
+area_HDF <- sum(area_hab_HDF$area_tot_hab)
+area_HDF_poly <- sum(CLC$area_poly)
 
 
 #proportion par habitat en HDF
 area_hab_HDF$proportion <- (area_hab_HDF$area_tot_hab/area_HDF)
 sum(area_hab_HDF$proportion)
-ggprop <- plot(area_hab_HDF$proportion~area_hab_HDF$code_18)
+CLC <- merge(CLC, area_hab_HDF, by = "habitat")
+ggprop <- plot(area_hab_HDF$proportion~area_hab_HDF$habitat)
 
-#proportion des habitats par polygone en HDF
-#on aimerait savoir si le HGD utilise des petits polygone d'habitat ou plutot des grands polygones d'habitat en region de France
-habitat$proportion <- (habitat$area_poly/area_HDF)
-sum(habitat$proportion)
-habitat <- habitat %>% relocate(code_18, .after = id_poly)
+
+
+
+
+
 
 
 
@@ -219,9 +246,20 @@ st_write(Buffer_Disp, "Buffer_Disp.shp")
 
 
 
+# Transformation des coordonnees en donnees spatiales + modification de la projection
+data_HGD_sf <- st_as_sf(data_HGD, coords = c("Longitude","Latitude"))
+st_crs(data_HGD_sf) <- 4326
+data_HGD_sf <- st_transform(data_HGD_sf,crs=3832)
 
 #Assemblage des couches habitats + points GPS HGD
-sum_loc <- st_intersection(habitat, HGD_sf)
+sum_loc <- st_intersection(CLC, data_HGD_sf)
+
+
+
+
+
+
+
 
 
 
@@ -322,25 +360,25 @@ max_data_date <- max(sum_HGD$last)# la plus grande periode d'emission pour une b
 setDT(sum_loc)
 sum_loc_poly <- sum_loc[,.(occurence = .N),by=.(id_poly,bird_id,date_HH)][,.(occurence = .N),by=.(id_poly)]
 
-habitat <- merge(habitat, sum_loc_poly, bx = "id_poly", all.x = T)
-habitat$occurence[is.na(habitat$occurence)] <- 0
-habitat <- habitat %>% relocate(occurence, .after = code_18)
+CLC <- merge(CLC, sum_loc_poly, bx = "id_poly", all.x = T)
+CLC$occurence[is.na(CLC$occurence)] <- 0
+CLC <- CLC %>% relocate(occurence, .after = code_18)
 
 
 #création data.table pour d_gg
-habitat_DT <- habitat
-setDT(habitat_DT)
-habitat_DT[,occupation := occurence>0]
+CLC_DT <- CLC
+setDT(CLC_DT)
+CLC_DT[,occupation := occurence>0]
 
-#creation d'un tableau a partir de habitat_DT
-habitat_DT[,proportion := as.numeric(proportion)]
-d_gg <- habitat_DT[,.(prop_mean = mean(proportion),prop_med = median(proportion),inf95 = quantile(proportion, 0.025),sup95 = quantile(proportion, 0.975)), by=.(code_18,occupation)]
+#creation d'un tableau a partir de CLC_DT
+CLC_DT[,proportion := as.numeric(proportion)]
+d_gg <- CLC_DT[,.(prop_mean = mean(proportion),prop_med = median(proportion),inf95 = quantile(proportion, 0.025),sup95 = quantile(proportion, 0.975)), by=.(habitat,occupation)]
 
 
 
 # Figure comparaison des habitats composant les polygones occupes et non occupes
 library(ggplot2); library(units)
-gg <- ggplot(data = d_gg, aes(x = code_18, y = prop_mean,fill = occupation,colour=occupation,group=occupation))
+gg <- ggplot(data = d_gg, aes(x = habitat, y = prop_mean,fill = occupation,colour=occupation,group=occupation))
 gg <- gg + geom_errorbar(aes(ymin = inf95, ymax = sup95),width = 0.5,alpha=.5,linewidth =1)
 gg <- gg +  geom_point(alpha=.8,size=2)
 gg <- gg + labs(y = "Proportion mean", x = "Habitats")
