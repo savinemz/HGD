@@ -219,6 +219,18 @@ boxplot(HGD_DT_Dist$dist~periode)
 
 
 
+
+library(dplyr)
+HGD_DT <- data_HGD
+HGD_DT <- data_HGD[,-c(2,3,4,6,7,8,9,10,13,14,15,16,17,18,19,20,21,22,23,25,26,27,28,29)]
+HGD_Disp <- filter(HGD_DT,periode == "Dispersion")
+HGD_Depali <- filter(HGD_DT,periode == "Dependance alimentaire")
+
+
+
+
+
+
 #Creation des buffer autour de mes points GPS
 #Creation des buffer de 100 m autour de mes data en dependance alimentaire
 data_HGD_Depali <- filter(data_HGD,periode == "Dependance alimentaire")
@@ -386,3 +398,181 @@ gg
 #ggsave("Rplot/prop_mean.png",gg)
 
 
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+# Script to plot convex hull over points in ggplot2
+
+# Packages
+library(dplyr)  # To make code easier to read
+library(ggplot2)
+
+# Data Generation
+set.seed(1)  # For reproducibility of example
+
+df = data.frame(x = rnorm(100, 10, 5), y = rnorm(100, 10, 5), z = sample(letters[1:5], size =  100, replace = T))
+?rnorm
+# Plot without convex hulls
+p = ggplot(df, aes(x, y, colour = z)) +
+  geom_point()
+p
+# Computing convex hulls
+s = df %>%
+  split(df$z)  # Tranform data.frame in lists of data.frames depending on column 'z'
+
+ch = s %>%
+  # Compute which points are on the convex hull of each data.frame /!\ Check how 'chull' works
+  lapply(., function(el) chull(el$x, el$y))  # 'ch' now contains the row numbers of points on convex hull per sub-data.frame
+
+# Get points for each sub-data.frame using names index
+ch = lapply(names(ch), function(x) s[[x]][ch[[x]],]) %>%   
+  do.call(rbind, .)  # Join all convex hull points in a single data.frame
+
+# Plot with convex hulls
+p.ch = ggplot(df, aes(x, y, colour = z)) +
+  geom_point() +
+  geom_polygon(data = ch, aes(fill = z), alpha = 0.2)
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+# Data Generation
+library(dplyr)
+HGD_DT <- data_HGD
+HGD_DT <- data_HGD[,-c(2,3,4,6,7,8,9,10,13,14,15,16,17,18,19,20,21,22,23,25,26,27,28,29)]
+HGD_Disp <- filter(HGD_DT,periode == "Dispersion")
+HGD_Depali <- filter(HGD_DT,periode == "Dependance alimentaire")
+
+
+df = HGD_Disp
+# Plot without convex hulls
+p = ggplot(df, aes(Longitude, Latitude, colour = bird_id)) +
+  geom_point()
+p
+# Computing convex hulls
+s = df %>%
+  split(df$bird_id)  # Tranform data.frame in lists of data.frames depending on column 'bird_id'
+
+ch = s %>%
+  # Compute which points are on the convex hull of each data.frame /!\ Check how 'chull' works
+  lapply(., function(el) chull(el$Longitude, el$Latitude))  # 'ch' now contains the row numbers of points on convex hull per sub-data.frame
+
+# Get points for each sub-data.frame using names index
+ch = lapply(names(ch), function(x) s[[x]][ch[[x]],]) %>%   
+  do.call(rbind, .)  # Join all convex hull points in a single data.frame
+
+# Plot with convex hulls
+p.ch = ggplot(df, aes(Longitude, Latitude, colour = bird_id)) +
+  geom_point() +
+  geom_polygon(data = ch, aes(fill = bird_id), alpha = 0.2)
+p.ch
+
+
+
+install.packages("adehabitatHR")
+library(adehabitatHR)
+library(sf)
+library(ggplot2)
+
+
+data_HGD_sf <- st_as_sf(data_HGD, coords = c("Longitude","Latitude"))
+st_crs(data_HGD_sf) <- 4326
+data_HGD_sf <- st_transform(data_HGD_sf,crs=3832)
+
+NPDC <- st_read("SIG/Departement NPDC.shp")
+NPDC <- st_make_valid(NPDC)
+NPDC <- st_transform(NPDC,crs=3832)
+NPDC <- st_make_valid(NPDC)
+HGD_sf_NPDC <- data_HGD_sf[,c("bird_id")]
+HGD_sf_NPDC <- st_crop(HGD_sf_NPDC,st_bbox(NPDC))
+
+HGD_sf_NPDC_k <- as(HGD_sf_NPDC,'Spatial')
+
+kdh <- kernelUD(HGD_sf_NPDC_k, h="href", grid = 1000)
+image(kdh)
+
+
+# creating SpatialPolygonsDataFrame
+kd_names <- names(kdh)
+ud_95 <- lapply(kdh, function(x) try(getverticeshr(x, 95)))
+
+
+sapply(1:length(ud_95), function(i) {
+  row.names(ud_95[[i]]) <<- kd_names[i]
+})
+sdf_poly_95 <- Reduce(rbind, ud_95)
+df_95 <- fortify(sdf_poly_95)
+df_95$bird_id <- df_95$id
+
+
+
+ud_50 <- lapply(kdh, function(x) try(getverticeshr(x, 50)))
+# changing each polygons id to the species name for rbind call
+sapply(1:length(ud_50), function(i) {
+  row.names(ud_50[[i]]) <<- kd_names[i]
+})
+sdf_poly_50 <- Reduce(rbind, ud_50)
+df_50 <- fortify(sdf_poly_50)
+df_50$bird_id <- df_50$id
+
+ud_30 <- lapply(kdh, function(x) try(getverticeshr(x, 30)))
+# changing each polygons id to the species name for rbind call
+sapply(1:length(ud_30), function(i) {
+  row.names(ud_30[[i]]) <<- kd_names[i]
+})
+sdf_poly_30 <- Reduce(rbind, ud_30)
+df_30 <- fortify(sdf_poly_30)
+df_30$bird_id <- df_30$id
+
+
+
+
+
+
+
+
+library(ggplot2)
+install.packages("ggspatial")
+library(ggspatial)
+
+gg <- ggplot()  + theme_bw() + facet_wrap(.~bird_id, scales = "free")
+##gg <- gg + geom_sf(data = COUCHE_LAGON_BLEU,aes(fill=habitat), colour=NA, size=0.2, alpha=.5)
+gg <- gg +   geom_polygon(data = df_95, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_50, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg + geom_sf(data = data_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) #+ geom_path(data=dd,aes(x=X,y=Y,group=bird_id,colour= bird_id),alpha=0.2,size=0.5)
+gg <- gg + annotation_scale()
+gg <- gg + labs(x="",y="",colour="birds",title="Kernel 95% and 50%")
+#gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
+gg <- gg + scale_fill_manual(values=vec_colour)
+gg
+
+
+
+gg <- ggplot()  + theme_bw() + facet_wrap(.~bird_id)
+##gg <- gg + geom_sf(data = COUCHE_LAGON_BLEU,aes(fill=habitat), colour=NA, size=0.2, alpha=.5)
+gg <- gg +   geom_polygon(data = df_95, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_50, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_30, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg + geom_sf(data = data_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) #+ geom_path(data=dd,aes(x=X,y=Y,group=bird_id,colour= bird_id),alpha=0.2,size=0.5)
+gg <- gg + annotation_scale()
+gg <- gg + labs(x="",y="",colour="birds",title="Kernel 95% and 50%")
+#gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
+gg <- gg + scale_fill_manual(values=vec_colour)
+gg
+
+
+
+
+
+
+gg <- ggplot()  + theme_bw() + facet_wrap(.~bird_id)
+##gg <- gg + geom_sf(data = COUCHE_LAGON_BLEU,aes(fill=habitat), colour=NA, size=0.2, alpha=.5)
+gg <- gg +   geom_polygon(data = df_95, aes(x = long, y = lat, color = "red", group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_50, aes(x = long, y = lat, color = "orange", group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_30, aes(x = long, y = lat, color = "yellow", group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg + geom_sf(data = data_HGD_sf,aes(group=bird_id,colour=""),linewidth =0.8) #+ geom_path(data=dd,aes(x=X,y=Y,group=bird_id,colour= bird_id),alpha=0.2,size=0.5)
+gg <- gg + annotation_scale()
+gg <- gg + labs(x="",y="",colour="birds",title="Kernel 95% and 50%")
+#gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
+gg <- gg + scale_fill_manual(values=vec_colour)
+gg
