@@ -463,6 +463,9 @@ HGD_sf_NPDC_k <- as(HGD_sf_NPDC,'Spatial')
 kdh <- kernelUD(HGD_sf_NPDC_k, h="href", grid = 1000)
 image(kdh)
 
+kdh <- kernelUD(HGD_sf_NPDC_k, h="LSCV", grid = 1000)
+image(kdh)
+
 
 # creating SpatialPolygonsDataFrame
 # Polygone spatial 95%
@@ -519,7 +522,7 @@ gg <- gg + labs(x="",y="",colour="Birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
 gg
-
+#ggsave("Rplot/Kernel/All/kernel_NPDC.png",gg, width = 25, height = 13)
 
 
 #Vu generale des kernel depali + disp region HDF
@@ -534,7 +537,7 @@ gg <- gg + labs(x="",y="",colour="Birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
 gg
-
+ggsave("Rplot/Kernel/All/kernel_HDF.png",gg, width = 25, height = 13)
 
 
 #vu par HGD des kernel departement NPDC
@@ -550,7 +553,7 @@ gg <- gg + labs(x="",y="",colour="birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + scale_fill_manual(values=vec_colour)
 gg
 
-
+ggsave("Rplot/Kernel/All/kernel_NPDC_bird.png",gg, width = 25, height = 13)
 
 ##### DV dependance alimentaire (Kernel) ############################################################################################################################
 HGD_Depali <- filter(data_HGD,periode == "Dependance alimentaire")
