@@ -664,7 +664,7 @@ ggsave("Rplot/Kernel/Depali/kernel_NPDC_bird_href.png",gg, width = 25, height = 
 ##### DV dispersion (Kernel)############################################################################################################################
 HGD_Disp <- filter(data_HGD,periode == "Dispersion")
 
-#Creation DV kernel Depali
+#Creation DV kernel Disp
 Disp_HGD_sf <- st_as_sf(HGD_Disp, coords = c("Longitude","Latitude"))
 st_crs(Disp_HGD_sf) <- 4326
 Disp_HGD_sf <- st_transform(Disp_HGD_sf,crs=3832)
@@ -712,7 +712,7 @@ df_30_Disp_h <- fortify(sdf_poly_30_Disp_h)
 df_30_Disp_h$bird_id <- df_30_Disp_h$id
 
 
-#Vu generale des kernel depali departement NPDC
+#Vu generale des kernel Disp departement NPDC
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
 ##gg <- gg + geom_sf(data = COUCHE_LAGON_BLEU,aes(fill=habitat), colour=NA, size=0.2, alpha=.5)
@@ -729,7 +729,7 @@ gg
 ggsave("Rplot/Kernel/Disp/kernel_NPDC_href.png",gg, width = 25, height = 13)
 
 
-#Vu generale des kernel depali region HDF
+#Vu generale des kernel Disp region HDF
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = HDF, size=0.2, alpha=.5)
 gg <- gg +   geom_polygon(data = df_95_Disp_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
@@ -988,7 +988,7 @@ ggsave("Rplot/Kernel/Depali/kernel_NPDC_bird_LSCV.png",gg, width = 25, height = 
 ##### DV dispersion (Kernel)############################################################################################################################
 HGD_Disp <- filter(data_HGD,periode == "Dispersion")
 
-#Creation DV kernel Depali
+#Creation DV kernel Disp
 Disp_HGD_sf <- st_as_sf(HGD_Disp, coords = c("Longitude","Latitude"))
 st_crs(Disp_HGD_sf) <- 4326
 Disp_HGD_sf <- st_transform(Disp_HGD_sf,crs=3832)
@@ -1036,7 +1036,7 @@ df_30_Disp_l <- fortify(sdf_poly_30_Disp_l)
 df_30_Disp_l$bird_id <- df_30_Disp_l$id
 
 
-#Vu generale des kernel depali departement NPDC
+#Vu generale des kernel Disp departement NPDC
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
 ##gg <- gg + geom_sf(data = COUCHE_LAGON_BLEU,aes(fill=habitat), colour=NA, size=0.2, alpha=.5)
@@ -1053,7 +1053,7 @@ gg
 ggsave("Rplot/Kernel/Disp/kernel_NPDC_LSCV.png",gg, width = 25, height = 13)
 
 
-#Vu generale des kernel depali region HDF
+#Vu generale des kernel Disp region HDF
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = HDF, size=0.2, alpha=.5)
 gg <- gg +   geom_polygon(data = df_95_Disp_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
