@@ -432,7 +432,7 @@ p.ch
 
 
 
-##### Domaine vitaux sous Kernel ##################################################################################################
+##### Domaine vitaux sous Kernel href ##################################################################################################
 
 ##### DV all (Kernel) ############################################################################################################################
 #install.packages("adehabitatHR")
@@ -522,7 +522,7 @@ gg <- gg + labs(x="",y="",colour="Birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
 gg
-#ggsave("Rplot/Kernel/All/kernel_NPDC.png",gg, width = 25, height = 13)
+ggsave("Rplot/Kernel/All/kernel_NPDC.png",gg, width = 25, height = 13)
 
 
 #Vu generale des kernel depali + disp region HDF
@@ -567,6 +567,9 @@ Depali_sf_NPDC <- st_crop(Depali_sf_NPDC,st_bbox(NPDC))
 Depali_sf_NPDC_k <- as(Depali_sf_NPDC,'Spatial')
 
 kdh_Depali <- kernelUD(Depali_sf_NPDC_k, h="href", grid = 1000)
+image(kdh_Depali)
+
+kdh_Depali <- kernelUD(Depali_sf_NPDC_k, h="LSCV", grid = 1000)
 image(kdh_Depali)
 
 
@@ -619,7 +622,7 @@ gg <- gg + labs(x="",y="",colour="Birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
 gg
-
+ggsave("Rplot/Kernel/Depali/kernel_NPDC.png",gg, width = 25, height = 13)
 
 
 #Vu generale des kernel depali region HDF
@@ -634,7 +637,7 @@ gg <- gg + labs(x="",y="",colour="Birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
 gg
-
+ggsave("Rplot/Kernel/Depali/kernel_HDF.png",gg, width = 25, height = 13)
 
 
 #vu par HGD des kernel departement NPDC
@@ -649,7 +652,7 @@ gg <- gg + labs(x="",y="",colour="birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
 gg
-
+ggsave("Rplot/Kernel/Depali/kernel_NPDC_bird.png",gg, width = 25, height = 13)
 
 
 
@@ -665,6 +668,9 @@ Disp_sf_NPDC <- st_crop(Disp_sf_NPDC,st_bbox(NPDC))
 Disp_sf_NPDC_k <- as(Disp_sf_NPDC,'Spatial')
 
 kdh_Disp <- kernelUD(Disp_sf_NPDC_k, h="href", grid = 2000, extent = 100)
+image(kdh_Disp)
+
+kdh_Disp <- kernelUD(Disp_sf_NPDC_k, h="LSCV", grid = 1000)
 image(kdh_Disp)
 
 
@@ -717,7 +723,7 @@ gg <- gg + labs(x="",y="",colour="Birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
 gg
-
+ggsave("Rplot/Kernel/Disp/kernel_NPDC.png",gg, width = 25, height = 13)
 
 
 #Vu generale des kernel depali region HDF
@@ -732,7 +738,7 @@ gg <- gg + labs(x="",y="",colour="Birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
 gg
-
+ggsave("Rplot/Kernel/Disp/kernel_HDF.png",gg, width = 25, height = 13)
 
 
 #vu par HGD des kernel departement NPDC
@@ -747,6 +753,15 @@ gg <- gg + labs(x="",y="",colour="birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
 gg
+ggsave("Rplot/Kernel/Disp/kernel_NPDC_bird.png",gg, width = 25, height = 13)
+
+
+
+
+
+
+
+
 
 
 
