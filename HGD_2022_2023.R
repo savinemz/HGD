@@ -437,7 +437,7 @@ p.ch
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
 
-##### Domaine vitaux sous Kernel href ##################################################################################################
+### Domaine vitaux sous Kernel href ##################################################################################################
 
 ##### DV all (Kernel) ############################################################################################################################
 #install.packages("adehabitatHR")
@@ -465,47 +465,44 @@ HGD_sf_NPDC <- data_HGD_sf[,c("bird_id")]
 HGD_sf_NPDC <- st_crop(HGD_sf_NPDC,st_bbox(NPDC))
 HGD_sf_NPDC_k <- as(HGD_sf_NPDC,'Spatial')
 
-kdh <- kernelUD(HGD_sf_NPDC_k, h="href", grid = 1000)
-image(kdh)
-
-kdh <- kernelUD(HGD_sf_NPDC_k, h="LSCV", grid = 1000)
-image(kdh)
+kdh_all_h <- kernelUD(HGD_sf_NPDC_k, h="href", grid = 1000)
+image(kdh_all_h)
 
 
 # creating SpatialPolygonsDataFrame
 # Polygone spatial 95%
-kd_names <- names(kdh)
-ud_95 <- lapply(kdh, function(x) try(getverticeshr(x, 95)))
+kd_names_all_h <- names(kdh_all_h)
+ud_95_all_h <- lapply(kdh_all_h, function(x) try(getverticeshr(x, 95)))
 
 
-sapply(1:length(ud_95), function(i) {
-  row.names(ud_95[[i]]) <<- kd_names[i]
+sapply(1:length(ud_95_all_h), function(i) {
+  row.names(ud_95_all_h[[i]]) <<- kd_names_all_h[i]
 })
-sdf_poly_95 <- Reduce(rbind, ud_95)
-df_95 <- fortify(sdf_poly_95)
-df_95$bird_id <- df_95$id
+sdf_poly_95_all_h <- Reduce(rbind, ud_95_all_h)
+df_95_all_h <- fortify(sdf_poly_95_all_h)
+df_95_all_h$bird_id <- df_95_all_h$id
 
 
 # Polygone spatial 50%
-ud_50 <- lapply(kdh, function(x) try(getverticeshr(x, 50)))
+ud_50_all_h <- lapply(kdh_all_h, function(x) try(getverticeshr(x, 50)))
 # changing each polygons id to the species name for rbind call
-sapply(1:length(ud_50), function(i) {
-  row.names(ud_50[[i]]) <<- kd_names[i]
+sapply(1:length(ud_50_all_h), function(i) {
+  row.names(ud_50_all_h[[i]]) <<- kd_names_all_h[i]
 })
-sdf_poly_50 <- Reduce(rbind, ud_50)
-df_50 <- fortify(sdf_poly_50)
-df_50$bird_id <- df_50$id
+sdf_poly_50_all_h <- Reduce(rbind, ud_50_all_h)
+df_50_all_h <- fortify(sdf_poly_50_all_h)
+df_50_all_h$bird_id <- df_50_all_h$id
 
 
 # Polygone spatial 30%
-ud_30 <- lapply(kdh, function(x) try(getverticeshr(x, 30)))
+ud_30_all_h <- lapply(kdh_all_h, function(x) try(getverticeshr(x, 30)))
 # changing each polygons id to the species name for rbind call
-sapply(1:length(ud_30), function(i) {
-  row.names(ud_30[[i]]) <<- kd_names[i]
+sapply(1:length(ud_30_all_h), function(i) {
+  row.names(ud_30_all_h[[i]]) <<- kd_names_all_h[i]
 })
-sdf_poly_30 <- Reduce(rbind, ud_30)
-df_30 <- fortify(sdf_poly_30)
-df_30$bird_id <- df_30$id
+sdf_poly_30_all_h <- Reduce(rbind, ud_30_all_h)
+df_30_all_h <- fortify(sdf_poly_30_all_h)
+df_30_all_h$bird_id <- df_30_all_h$id
 
 
 #install.packages("ggspatial")
@@ -518,11 +515,12 @@ library(ggspatial)
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
 ##gg <- gg + geom_sf(data = COUCHE_LAGON_BLEU,aes(fill=habitat), colour=NA, size=0.2, alpha=.5)
-gg <- gg +   geom_polygon(data = df_95, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_50, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_30, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_95_all_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_50_all_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_30_all_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
 gg <- gg + geom_sf(data = data_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) #+ geom_path(data=dd,aes(x=X,y=Y,group=bird_id,colour= bird_id),alpha=0.2,size=0.5)
 gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="Birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
@@ -533,11 +531,12 @@ ggsave("Rplot/Kernel/All/kernel_NPDC_href.png",gg, width = 25, height = 13)
 #Vu generale des kernel depali + disp region HDF
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = HDF, size=0.2, alpha=.5)
-gg <- gg +   geom_polygon(data = df_95, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_50, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_30, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_95_all_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_50_all_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_30_all_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
 gg <- gg + geom_sf(data = data_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) #+ geom_path(data=dd,aes(x=X,y=Y,group=bird_id,colour= bird_id),alpha=0.2,size=0.5)
 gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="Birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
@@ -548,11 +547,12 @@ ggsave("Rplot/Kernel/All/kernel_HDF_href.png",gg, width = 25, height = 13)
 #vu par HGD des kernel departement NPDC
 gg <- ggplot()  + theme_bw() + facet_wrap(.~bird_id)
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
-gg <- gg +   geom_polygon(data = df_95, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_50, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_30, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_95_all_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_50_all_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_30_all_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
 gg <- gg + geom_sf(data = data_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) #+ geom_path(data=dd,aes(x=X,y=Y,group=bird_id,colour= bird_id),alpha=0.2,size=0.5)
 gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
@@ -571,58 +571,56 @@ Depali_sf_NPDC <- Depali_HGD_sf[,c("bird_id")]
 Depali_sf_NPDC <- st_crop(Depali_sf_NPDC,st_bbox(NPDC))
 Depali_sf_NPDC_k <- as(Depali_sf_NPDC,'Spatial')
 
-kdh_Depali <- kernelUD(Depali_sf_NPDC_k, h="href", grid = 1000)
-image(kdh_Depali)
-
-kdh_Depali <- kernelUD(Depali_sf_NPDC_k, h="LSCV", grid = 1000)
-image(kdh_Depali)
+kdh_Depali_h <- kernelUD(Depali_sf_NPDC_k, h="href", grid = 1000)
+image(kdh_Depali_h)
 
 
 # creating SpatialPolygonsDataFrame
 # Polygone spatial 95%
-kd_names_Depali <- names(kdh_Depali)
-ud_95_Depali <- lapply(kdh_Depali, function(x) try(getverticeshr(x, 95)))
+kd_names_Depali_h <- names(kdh_Depali_h)
+ud_95_Depali_h <- lapply(kdh_Depali_h, function(x) try(getverticeshr(x, 95)))
 
 
-sapply(1:length(ud_95_Depali), function(i) {
-  row.names(ud_95_Depali[[i]]) <<- kd_names_Depali[i]
+sapply(1:length(ud_95_Depali_h), function(i) {
+  row.names(ud_95_Depali_h[[i]]) <<- kd_names_Depali_h[i]
 })
-sdf_poly_95_Depali <- Reduce(rbind, ud_95_Depali)
-df_95_Depali <- fortify(sdf_poly_95_Depali)
-df_95_Depali$bird_id <- df_95_Depali$id
+sdf_poly_95_Depali_h <- Reduce(rbind, ud_95_Depali_h)
+df_95_Depali_h <- fortify(sdf_poly_95_Depali_h)
+df_95_Depali_h$bird_id <- df_95_Depali_h$id
 
 
 # Polygone spatial 50%
-ud_50_Depali <- lapply(kdh_Depali, function(x) try(getverticeshr(x, 50)))
+ud_50_Depali_h <- lapply(kdh_Depali_h, function(x) try(getverticeshr(x, 50)))
 # changing each polygons id to the species name for rbind call
-sapply(1:length(ud_50_Depali), function(i) {
-  row.names(ud_50_Depali[[i]]) <<- kd_names_Depali[i]
+sapply(1:length(ud_50_Depali_h), function(i) {
+  row.names(ud_50_Depali_h[[i]]) <<- kd_names_Depali_h[i]
 })
-sdf_poly_50_Depali <- Reduce(rbind, ud_50_Depali)
-df_50_Depali <- fortify(sdf_poly_50_Depali)
-df_50_Depali$bird_id <- df_50_Depali$id
+sdf_poly_50_Depali_h <- Reduce(rbind, ud_50_Depali_h)
+df_50_Depali_h <- fortify(sdf_poly_50_Depali_h)
+df_50_Depali_h$bird_id <- df_50_Depali_h$id
 
 
 # Polygone spatial 30%
-ud_30_Depali <- lapply(kdh_Depali, function(x) try(getverticeshr(x, 30)))
+ud_30_Depali_h <- lapply(kdh_Depali_h, function(x) try(getverticeshr(x, 30)))
 # changing each polygons id to the species name for rbind call
-sapply(1:length(ud_30_Depali), function(i) {
-  row.names(ud_30_Depali[[i]]) <<- kd_names_Depali[i]
+sapply(1:length(ud_30_Depali_h), function(i) {
+  row.names(ud_30_Depali_h[[i]]) <<- kd_names_Depali_h[i]
 })
-sdf_poly_30_Depali <- Reduce(rbind, ud_30_Depali)
-df_30_Depali <- fortify(sdf_poly_30_Depali)
-df_30_Depali$bird_id <- df_30_Depali$id
+sdf_poly_30_Depali_h <- Reduce(rbind, ud_30_Depali_h)
+df_30_Depali_h <- fortify(sdf_poly_30_Depali_h)
+df_30_Depali_h$bird_id <- df_30_Depali_h$id
 
 
 #Vu generale des kernel depali departement NPDC
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
 ##gg <- gg + geom_sf(data = COUCHE_LAGON_BLEU,aes(fill=habitat), colour=NA, size=0.2, alpha=.5)
-gg <- gg +   geom_polygon(data = df_95_Depali, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_50_Depali, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_30_Depali, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_95_Depali_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_50_Depali_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_30_Depali_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
 gg <- gg + geom_sf(data = Depali_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) #+ geom_path(data=dd,aes(x=X,y=Y,group=bird_id,colour= bird_id),alpha=0.2,size=0.5)
 gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="Birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
@@ -633,11 +631,12 @@ ggsave("Rplot/Kernel/Depali/kernel_NPDC_href.png",gg, width = 25, height = 13)
 #Vu generale des kernel depali region HDF
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = HDF, size=0.2, alpha=.5)
-gg <- gg +   geom_polygon(data = df_95_Depali, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_50_Depali, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_30_Depali, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_95_Depali_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_50_Depali_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_30_Depali_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
 gg <- gg + geom_sf(data = Depali_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) #+ geom_path(data=dd,aes(x=X,y=Y,group=bird_id,colour= bird_id),alpha=0.2,size=0.5)
 gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="Birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
@@ -648,11 +647,12 @@ ggsave("Rplot/Kernel/Depali/kernel_HDF_href.png",gg, width = 25, height = 13)
 #vu par HGD des kernel departement NPDC
 gg <- ggplot()  + theme_bw() + facet_wrap(.~bird_id)
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
-gg <- gg +   geom_polygon(data = df_95_Depali, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_50_Depali, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_30_Depali, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_95_Depali_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_50_Depali_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_30_Depali_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
 gg <- gg + geom_sf(data = Depali_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) #+ geom_path(data=dd,aes(x=X,y=Y,group=bird_id,colour= bird_id),alpha=0.2,size=0.5)
 gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
@@ -672,58 +672,56 @@ Disp_sf_NPDC <- Disp_HGD_sf[,c("bird_id")]
 Disp_sf_NPDC <- st_crop(Disp_sf_NPDC,st_bbox(NPDC))
 Disp_sf_NPDC_k <- as(Disp_sf_NPDC,'Spatial')
 
-kdh_Disp <- kernelUD(Disp_sf_NPDC_k, h="href", grid = 2000, extent = 100)
-image(kdh_Disp)
-
-kdh_Disp <- kernelUD(Disp_sf_NPDC_k, h="LSCV", grid = 1000)
-image(kdh_Disp)
+kdh_Disp_h <- kernelUD(Disp_sf_NPDC_k, h="href", grid = 2000, extent = 100)#très long
+image(kdh_Disp_h)
 
 
 # creating SpatialPolygonsDataFrame
 # Polygone spatial 95%
-kd_names_Disp <- names(kdh_Disp)
-ud_95_Disp <- lapply(kdh_Disp, function(x) try(getverticeshr(x, 95)))
+kd_names_Disp_h <- names(kdh_Disp_h)
+ud_95_Disp_h <- lapply(kdh_Disp_h, function(x) try(getverticeshr(x, 95)))
 
 
-sapply(1:length(ud_95_Disp), function(i) {
-  row.names(ud_95_Disp[[i]]) <<- kd_names_Disp[i]
+sapply(1:length(ud_95_Disp_h), function(i) {
+  row.names(ud_95_Disp_h[[i]]) <<- kd_names_Disp_h[i]
 })
-sdf_poly_95_Disp <- Reduce(rbind, ud_95_Disp)
-df_95_Disp <- fortify(sdf_poly_95_Disp)
-df_95_Disp$bird_id <- df_95_Disp$id
+sdf_poly_95_Disp_h <- Reduce(rbind, ud_95_Disp_h)
+df_95_Disp_h <- fortify(sdf_poly_95_Disp_h)
+df_95_Disp_h$bird_id <- df_95_Disp_h$id
 
 
 # Polygone spatial 50%
-ud_50_Disp <- lapply(kdh_Disp, function(x) try(getverticeshr(x, 50)))
+ud_50_Disp_h <- lapply(kdh_Disp_h, function(x) try(getverticeshr(x, 50)))
 # changing each polygons id to the species name for rbind call
-sapply(1:length(ud_50_Disp), function(i) {
-  row.names(ud_50_Disp[[i]]) <<- kd_names_Disp[i]
+sapply(1:length(ud_50_Disp_h), function(i) {
+  row.names(ud_50_Disp_h[[i]]) <<- kd_names_Disp_h[i]
 })
-sdf_poly_50_Disp <- Reduce(rbind, ud_50_Disp)
-df_50_Disp <- fortify(sdf_poly_50_Disp)
-df_50_Disp$bird_id <- df_50_Disp$id
+sdf_poly_50_Disp_h <- Reduce(rbind, ud_50_Disp_h)
+df_50_Disp_h <- fortify(sdf_poly_50_Disp_h)
+df_50_Disp_h$bird_id <- df_50_Disp_h$id
 
 
 # Polygone spatial 30%
-ud_30_Disp <- lapply(kdh_Disp, function(x) try(getverticeshr(x, 30)))
+ud_30_Disp_h <- lapply(kdh_Disp_h, function(x) try(getverticeshr(x, 30)))
 # changing each polygons id to the species name for rbind call
-sapply(1:length(ud_30_Disp), function(i) {
-  row.names(ud_30_Disp[[i]]) <<- kd_names_Disp[i]
+sapply(1:length(ud_30_Disp_h), function(i) {
+  row.names(ud_30_Disp_h[[i]]) <<- kd_names_Disp_h[i]
 })
-sdf_poly_30_Disp <- Reduce(rbind, ud_30_Disp)
-df_30_Disp <- fortify(sdf_poly_30_Disp)
-df_30_Disp$bird_id <- df_30_Disp$id
+sdf_poly_30_Disp_h <- Reduce(rbind, ud_30_Disp_h)
+df_30_Disp_h <- fortify(sdf_poly_30_Disp_h)
+df_30_Disp_h$bird_id <- df_30_Disp_h$id
 
 
 #Vu generale des kernel depali departement NPDC
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
 ##gg <- gg + geom_sf(data = COUCHE_LAGON_BLEU,aes(fill=habitat), colour=NA, size=0.2, alpha=.5)
-gg <- gg +   geom_polygon(data = df_95_Disp, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_50_Disp, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_30_Disp, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_95_Disp_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_50_Disp_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_30_Disp_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
 gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) #+ geom_path(data=dd,aes(x=X,y=Y,group=bird_id,colour= bird_id),alpha=0.2,size=0.5)
 gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="Birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
@@ -734,11 +732,12 @@ ggsave("Rplot/Kernel/Disp/kernel_NPDC_href.png",gg, width = 25, height = 13)
 #Vu generale des kernel depali region HDF
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = HDF, size=0.2, alpha=.5)
-gg <- gg +   geom_polygon(data = df_95_Disp, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_50_Disp, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_30_Disp, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_95_Disp_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_50_Disp_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_30_Disp_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
 gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) #+ geom_path(data=dd,aes(x=X,y=Y,group=bird_id,colour= bird_id),alpha=0.2,size=0.5)
 gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="Birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
@@ -749,11 +748,12 @@ ggsave("Rplot/Kernel/Disp/kernel_HDF_href.png",gg, width = 25, height = 13)
 #vu par HGD des kernel departement NPDC
 gg <- ggplot()  + theme_bw() + facet_wrap(.~bird_id)
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
-gg <- gg +   geom_polygon(data = df_95_Disp, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_50_Disp, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_30_Disp, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_95_Disp_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_50_Disp_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_30_Disp_h, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
 gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) #+ geom_path(data=dd,aes(x=X,y=Y,group=bird_id,colour= bird_id),alpha=0.2,size=0.5)
 gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
@@ -761,7 +761,7 @@ gg
 ggsave("Rplot/Kernel/Disp/kernel_NPDC_bird_href.png",gg, width = 25, height = 13)
 
 
-##### Domaine vitaux sous Kernel LSCV ##################################################################################################
+### Domaine vitaux sous Kernel LSCV ##################################################################################################
 
 ##### DV all (Kernel) ############################################################################################################################
 #install.packages("adehabitatHR")
@@ -789,44 +789,44 @@ HGD_sf_NPDC <- data_HGD_sf[,c("bird_id")]
 HGD_sf_NPDC <- st_crop(HGD_sf_NPDC,st_bbox(NPDC))
 HGD_sf_NPDC_k <- as(HGD_sf_NPDC,'Spatial')
 
-kdh <- kernelUD(HGD_sf_NPDC_k, h="LSCV", grid = 1000)
-image(kdh)
+kdh_all_l <- kernelUD(HGD_sf_NPDC_k, h="LSCV", grid = 1000)
+image(kdh_all_l)
 
 
 # creating SpatialPolygonsDataFrame
 # Polygone spatial 95%
-kd_names <- names(kdh)
-ud_95 <- lapply(kdh, function(x) try(getverticeshr(x, 95)))
+kd_names_all_l <- names(kdh_all_l)
+ud_95_all_l <- lapply(kdh_all_l, function(x) try(getverticeshr(x, 95)))
 
 
-sapply(1:length(ud_95), function(i) {
-  row.names(ud_95[[i]]) <<- kd_names[i]
+sapply(1:length(ud_95_all_l), function(i) {
+  row.names(ud_95_all_l[[i]]) <<- kd_names_all_l[i]
 })
-sdf_poly_95 <- Reduce(rbind, ud_95)
-df_95 <- fortify(sdf_poly_95)
-df_95$bird_id <- df_95$id
+sdf_poly_95_all_l <- Reduce(rbind, ud_95_all_l)
+df_95_all_l <- fortify(sdf_poly_95_all_l)
+df_95_all_l$bird_id <- df_95_all_l$id
 
 
 # Polygone spatial 50%
-ud_50 <- lapply(kdh, function(x) try(getverticeshr(x, 50)))
+ud_50_all_l <- lapply(kdh_all_l, function(x) try(getverticeshr(x, 50)))
 # changing each polygons id to the species name for rbind call
-sapply(1:length(ud_50), function(i) {
-  row.names(ud_50[[i]]) <<- kd_names[i]
+sapply(1:length(ud_50_all_l), function(i) {
+  row.names(ud_50_all_l[[i]]) <<- kd_names_all_l[i]
 })
-sdf_poly_50 <- Reduce(rbind, ud_50)
-df_50 <- fortify(sdf_poly_50)
-df_50$bird_id <- df_50$id
+sdf_poly_50_all_l <- Reduce(rbind, ud_50_all_l)
+df_50_all_l <- fortify(sdf_poly_50_all_l)
+df_50_all_l$bird_id <- df_50_all_l$id
 
 
 # Polygone spatial 30%
-ud_30 <- lapply(kdh, function(x) try(getverticeshr(x, 30)))
+ud_30_all_l <- lapply(kdh_all_l, function(x) try(getverticeshr(x, 30)))
 # changing each polygons id to the species name for rbind call
-sapply(1:length(ud_30), function(i) {
-  row.names(ud_30[[i]]) <<- kd_names[i]
+sapply(1:length(ud_30_all_l), function(i) {
+  row.names(ud_30_all_l[[i]]) <<- kd_names_all_l[i]
 })
-sdf_poly_30 <- Reduce(rbind, ud_30)
-df_30 <- fortify(sdf_poly_30)
-df_30$bird_id <- df_30$id
+sdf_poly_30_all_l <- Reduce(rbind, ud_30_all_l)
+df_30_all_l <- fortify(sdf_poly_30_all_l)
+df_30_all_l$bird_id <- df_30_all_l$id
 
 
 #install.packages("ggspatial")
@@ -839,11 +839,12 @@ library(ggspatial)
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
 ##gg <- gg + geom_sf(data = COUCHE_LAGON_BLEU,aes(fill=habitat), colour=NA, size=0.2, alpha=.5)
-gg <- gg +   geom_polygon(data = df_95, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_50, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_30, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_95_all_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_50_all_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_30_all_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
 gg <- gg + geom_sf(data = data_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) #+ geom_path(data=dd,aes(x=X,y=Y,group=bird_id,colour= bird_id),alpha=0.2,size=0.5)
 gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="Birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
@@ -854,11 +855,12 @@ ggsave("Rplot/Kernel/All/kernel_NPDC_LSCV.png",gg, width = 25, height = 13)
 #Vu generale des kernel depali + disp region HDF
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = HDF, size=0.2, alpha=.5)
-gg <- gg +   geom_polygon(data = df_95, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_50, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_30, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_95_all_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_50_all_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_30_all_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
 gg <- gg + geom_sf(data = data_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) #+ geom_path(data=dd,aes(x=X,y=Y,group=bird_id,colour= bird_id),alpha=0.2,size=0.5)
 gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="Birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
@@ -869,11 +871,12 @@ ggsave("Rplot/Kernel/All/kernel_HDF_LSCV.png",gg, width = 25, height = 13)
 #vu par HGD des kernel departement NPDC
 gg <- ggplot()  + theme_bw() + facet_wrap(.~bird_id)
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
-gg <- gg +   geom_polygon(data = df_95, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_50, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_30, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_95_all_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_50_all_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_30_all_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
 gg <- gg + geom_sf(data = data_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) #+ geom_path(data=dd,aes(x=X,y=Y,group=bird_id,colour= bird_id),alpha=0.2,size=0.5)
 gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
@@ -892,55 +895,56 @@ Depali_sf_NPDC <- Depali_HGD_sf[,c("bird_id")]
 Depali_sf_NPDC <- st_crop(Depali_sf_NPDC,st_bbox(NPDC))
 Depali_sf_NPDC_k <- as(Depali_sf_NPDC,'Spatial')
 
-kdh_Depali <- kernelUD(Depali_sf_NPDC_k, h="LSCV", grid = 1000)
-image(kdh_Depali)
+kdh_Depali_l <- kernelUD(Depali_sf_NPDC_k, h="LSCV", grid = 1000)
+image(kdh_Depali_l)
 
 
 # creating SpatialPolygonsDataFrame
 # Polygone spatial 95%
-kd_names_Depali <- names(kdh_Depali)
-ud_95_Depali <- lapply(kdh_Depali, function(x) try(getverticeshr(x, 95)))
+kd_names_Depali_l <- names(kdh_Depali_l)
+ud_95_Depali_l <- lapply(kdh_Depali_l, function(x) try(getverticeshr(x, 95)))
 
 
-sapply(1:length(ud_95_Depali), function(i) {
-  row.names(ud_95_Depali[[i]]) <<- kd_names_Depali[i]
+sapply(1:length(ud_95_Depali_l), function(i) {
+  row.names(ud_95_Depali_l[[i]]) <<- kd_names_Depali_l[i]
 })
-sdf_poly_95_Depali <- Reduce(rbind, ud_95_Depali)
-df_95_Depali <- fortify(sdf_poly_95_Depali)
-df_95_Depali$bird_id <- df_95_Depali$id
+sdf_poly_95_Depali_l <- Reduce(rbind, ud_95_Depali_l)
+df_95_Depali_l <- fortify(sdf_poly_95_Depali_l)
+df_95_Depali_l$bird_id <- df_95_Depali_l$id
 
 
 # Polygone spatial 50%
-ud_50_Depali <- lapply(kdh_Depali, function(x) try(getverticeshr(x, 50)))
+ud_50_Depali_l <- lapply(kdh_Depali_l, function(x) try(getverticeshr(x, 50)))
 # changing each polygons id to the species name for rbind call
-sapply(1:length(ud_50_Depali), function(i) {
-  row.names(ud_50_Depali[[i]]) <<- kd_names_Depali[i]
+sapply(1:length(ud_50_Depali_l), function(i) {
+  row.names(ud_50_Depali_l[[i]]) <<- kd_names_Depali_l[i]
 })
-sdf_poly_50_Depali <- Reduce(rbind, ud_50_Depali)
-df_50_Depali <- fortify(sdf_poly_50_Depali)
-df_50_Depali$bird_id <- df_50_Depali$id
+sdf_poly_50_Depali_l <- Reduce(rbind, ud_50_Depali_l)
+df_50_Depali_l <- fortify(sdf_poly_50_Depali_l)
+df_50_Depali_l$bird_id <- df_50_Depali_l$id
 
 
 # Polygone spatial 30%
-ud_30_Depali <- lapply(kdh_Depali, function(x) try(getverticeshr(x, 30)))
+ud_30_Depali_l <- lapply(kdh_Depali_l, function(x) try(getverticeshr(x, 30)))
 # changing each polygons id to the species name for rbind call
-sapply(1:length(ud_30_Depali), function(i) {
-  row.names(ud_30_Depali[[i]]) <<- kd_names_Depali[i]
+sapply(1:length(ud_30_Depali_l), function(i) {
+  row.names(ud_30_Depali_l[[i]]) <<- kd_names_Depali_l[i]
 })
-sdf_poly_30_Depali <- Reduce(rbind, ud_30_Depali)
-df_30_Depali <- fortify(sdf_poly_30_Depali)
-df_30_Depali$bird_id <- df_30_Depali$id
+sdf_poly_30_Depali_l <- Reduce(rbind, ud_30_Depali_l)
+df_30_Depali_l <- fortify(sdf_poly_30_Depali_l)
+df_30_Depali_l$bird_id <- df_30_Depali_l$id
 
 
 #Vu generale des kernel depali departement NPDC
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
 ##gg <- gg + geom_sf(data = COUCHE_LAGON_BLEU,aes(fill=habitat), colour=NA, size=0.2, alpha=.5)
-gg <- gg +   geom_polygon(data = df_95_Depali, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_50_Depali, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_30_Depali, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_95_Depali_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_50_Depali_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_30_Depali_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
 gg <- gg + geom_sf(data = Depali_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) #+ geom_path(data=dd,aes(x=X,y=Y,group=bird_id,colour= bird_id),alpha=0.2,size=0.5)
 gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="Birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
@@ -951,11 +955,12 @@ ggsave("Rplot/Kernel/Depali/kernel_NPDC_LSCV.png",gg, width = 25, height = 13)
 #Vu generale des kernel depali region HDF
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = HDF, size=0.2, alpha=.5)
-gg <- gg +   geom_polygon(data = df_95_Depali, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_50_Depali, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_30_Depali, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_95_Depali_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_50_Depali_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_30_Depali_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
 gg <- gg + geom_sf(data = Depali_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) #+ geom_path(data=dd,aes(x=X,y=Y,group=bird_id,colour= bird_id),alpha=0.2,size=0.5)
 gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="Birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
@@ -966,11 +971,12 @@ ggsave("Rplot/Kernel/Depali/kernel_HDF_LSCV.png",gg, width = 25, height = 13)
 #vu par HGD des kernel departement NPDC
 gg <- ggplot()  + theme_bw() + facet_wrap(.~bird_id)
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
-gg <- gg +   geom_polygon(data = df_95_Depali, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_50_Depali, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_30_Depali, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_95_Depali_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_50_Depali_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_30_Depali_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
 gg <- gg + geom_sf(data = Depali_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) #+ geom_path(data=dd,aes(x=X,y=Y,group=bird_id,colour= bird_id),alpha=0.2,size=0.5)
 gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
@@ -990,55 +996,56 @@ Disp_sf_NPDC <- Disp_HGD_sf[,c("bird_id")]
 Disp_sf_NPDC <- st_crop(Disp_sf_NPDC,st_bbox(NPDC))
 Disp_sf_NPDC_k <- as(Disp_sf_NPDC,'Spatial')
 
-kdh_Disp <- kernelUD(Disp_sf_NPDC_k, h="LSCV", grid = 1000)
-image(kdh_Disp)
+kdh_Disp_l <- kernelUD(Disp_sf_NPDC_k, h="LSCV", grid = 1000)
+image(kdh_Disp_l)
 
 
 # creating SpatialPolygonsDataFrame
 # Polygone spatial 95%
-kd_names_Disp <- names(kdh_Disp)
-ud_95_Disp <- lapply(kdh_Disp, function(x) try(getverticeshr(x, 95)))
+kd_names_Disp_l <- names(kdh_Disp_l)
+ud_95_Disp_l <- lapply(kdh_Disp_l, function(x) try(getverticeshr(x, 95)))
 
 
-sapply(1:length(ud_95_Disp), function(i) {
-  row.names(ud_95_Disp[[i]]) <<- kd_names_Disp[i]
+sapply(1:length(ud_95_Disp_l), function(i) {
+  row.names(ud_95_Disp_l[[i]]) <<- kd_names_Disp_l[i]
 })
-sdf_poly_95_Disp <- Reduce(rbind, ud_95_Disp)
-df_95_Disp <- fortify(sdf_poly_95_Disp)
-df_95_Disp$bird_id <- df_95_Disp$id
+sdf_poly_95_Disp_l <- Reduce(rbind, ud_95_Disp_l)
+df_95_Disp_l <- fortify(sdf_poly_95_Disp_l)
+df_95_Disp_l$bird_id <- df_95_Disp_l$id
 
 
 # Polygone spatial 50%
-ud_50_Disp <- lapply(kdh_Disp, function(x) try(getverticeshr(x, 50)))
+ud_50_Disp_l <- lapply(kdh_Disp_l, function(x) try(getverticeshr(x, 50)))
 # changing each polygons id to the species name for rbind call
-sapply(1:length(ud_50_Disp), function(i) {
-  row.names(ud_50_Disp[[i]]) <<- kd_names_Disp[i]
+sapply(1:length(ud_50_Disp_l), function(i) {
+  row.names(ud_50_Disp_l[[i]]) <<- kd_names_Disp_l[i]
 })
-sdf_poly_50_Disp <- Reduce(rbind, ud_50_Disp)
-df_50_Disp <- fortify(sdf_poly_50_Disp)
-df_50_Disp$bird_id <- df_50_Disp$id
+sdf_poly_50_Disp_l <- Reduce(rbind, ud_50_Disp_l)
+df_50_Disp_l <- fortify(sdf_poly_50_Disp_l)
+df_50_Disp_l$bird_id <- df_50_Disp_l$id
 
 
 # Polygone spatial 30%
-ud_30_Disp <- lapply(kdh_Disp, function(x) try(getverticeshr(x, 30)))
+ud_30_Disp_l <- lapply(kdh_Disp_l, function(x) try(getverticeshr(x, 30)))
 # changing each polygons id to the species name for rbind call
-sapply(1:length(ud_30_Disp), function(i) {
-  row.names(ud_30_Disp[[i]]) <<- kd_names_Disp[i]
+sapply(1:length(ud_30_Disp_l), function(i) {
+  row.names(ud_30_Disp_l[[i]]) <<- kd_names_Disp_l[i]
 })
-sdf_poly_30_Disp <- Reduce(rbind, ud_30_Disp)
-df_30_Disp <- fortify(sdf_poly_30_Disp)
-df_30_Disp$bird_id <- df_30_Disp$id
+sdf_poly_30_Disp_l <- Reduce(rbind, ud_30_Disp_l)
+df_30_Disp_l <- fortify(sdf_poly_30_Disp_l)
+df_30_Disp_l$bird_id <- df_30_Disp_l$id
 
 
 #Vu generale des kernel depali departement NPDC
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
 ##gg <- gg + geom_sf(data = COUCHE_LAGON_BLEU,aes(fill=habitat), colour=NA, size=0.2, alpha=.5)
-gg <- gg +   geom_polygon(data = df_95_Disp, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_50_Disp, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_30_Disp, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_95_Disp_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_50_Disp_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_30_Disp_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
 gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) #+ geom_path(data=dd,aes(x=X,y=Y,group=bird_id,colour= bird_id),alpha=0.2,size=0.5)
 gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="Birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
@@ -1049,11 +1056,12 @@ ggsave("Rplot/Kernel/Disp/kernel_NPDC_LSCV.png",gg, width = 25, height = 13)
 #Vu generale des kernel depali region HDF
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = HDF, size=0.2, alpha=.5)
-gg <- gg +   geom_polygon(data = df_95_Disp, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_50_Disp, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_30_Disp, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_95_Disp_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_50_Disp_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_30_Disp_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
 gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) #+ geom_path(data=dd,aes(x=X,y=Y,group=bird_id,colour= bird_id),alpha=0.2,size=0.5)
 gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="Birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
@@ -1064,19 +1072,17 @@ ggsave("Rplot/Kernel/Disp/kernel_HDF_LSCV.png",gg, width = 25, height = 13)
 #vu par HGD des kernel departement NPDC
 gg <- ggplot()  + theme_bw() + facet_wrap(.~bird_id)
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
-gg <- gg +   geom_polygon(data = df_95_Disp, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_50_Disp, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_30_Disp, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_95_Disp_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_50_Disp_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_30_Disp_l, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
 gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) #+ geom_path(data=dd,aes(x=X,y=Y,group=bird_id,colour= bird_id),alpha=0.2,size=0.5)
 gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
 #gg <- gg + scale_fill_manual(values=vec_colour)
 gg
 ggsave("Rplot/Kernel/Disp/kernel_NPDC_bird_LSCV.png",gg, width = 25, height = 13)
-
-
-
 
 
 
