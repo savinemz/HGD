@@ -405,7 +405,8 @@ HGD_Disp <- filter(HGD_DT,periode == "Dispersion")
 HGD_Depali <- filter(HGD_DT,periode == "Dependance alimentaire")
 
 
-df = HGD_Depali
+
+df = HGD_Bachant
 # Plot without convex hulls
 p = ggplot(df, aes(Longitude, Latitude, colour = bird_id)) +
   geom_point()
@@ -430,12 +431,462 @@ p.ch
 
 
 
-p.ch = ggplot(df, aes(Longitude, Latitude, colour = bird_id)) +
+
+#MCP Bachant
+HGD_Bachant <- filter(HGD_DT,periode == "Dependance alimentaire")
+HGD_Bachant <- filter(HGD_Bachant,bird_id == "Bachant Malakoff")
+df = HGD_Bachant
+# Plot without convex hulls
+p = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point()
+p
+# Computing convex hulls
+s = df %>%
+  split(df$Quinzaine)  # Tranform data.frame in lists of data.frames depending on column 'bird_id'
+
+ch = s %>%
+  # Compute which points are on the convex hull of each data.frame /!\ Check how 'chull' works
+  lapply(., function(el) chull(el$Longitude, el$Latitude))  # 'ch' now contains the row numbers of points on convex hull per sub-data.frame
+
+# Get points for each sub-data.frame using names index
+ch = lapply(names(ch), function(x) s[[x]][ch[[x]],]) %>%   
+  do.call(rbind, .)  # Join all convex hull points in a single data.frame
+
+# Plot with convex hulls
+p.ch = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
   geom_point() +
-  geom_polygon(data = ch, aes(fill = bird_id), alpha = 0.2)
+  geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2)
 p.ch
-gg <- ggplot()  + theme_bw()
-gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
+
+gg <- ggplot(df, aes(Longitude, Latitude, colour = Quinzaine))
+gg <- gg + geom_point()
+gg <- gg + geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2, linewidth = 0.5)
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",title="CMP Bachant")
+gg
+ggsave("Rplot/MCP_Depali/MCP_Bachant.png",gg, width = 15, height = 10)
+
+
+
+#MCP Quelmes
+HGD_Quelmes <- filter(HGD_DT,periode == "Dependance alimentaire")
+HGD_Quelmes <- filter(HGD_Quelmes,bird_id == "Quelmes")
+df = HGD_Quelmes
+# Plot without convex hulls
+p = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point()
+p
+# Computing convex hulls
+s = df %>%
+  split(df$Quinzaine)  # Tranform data.frame in lists of data.frames depending on column 'bird_id'
+
+ch = s %>%
+  # Compute which points are on the convex hull of each data.frame /!\ Check how 'chull' works
+  lapply(., function(el) chull(el$Longitude, el$Latitude))  # 'ch' now contains the row numbers of points on convex hull per sub-data.frame
+
+# Get points for each sub-data.frame using names index
+ch = lapply(names(ch), function(x) s[[x]][ch[[x]],]) %>%   
+  do.call(rbind, .)  # Join all convex hull points in a single data.frame
+
+# Plot with convex hulls
+p.ch = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point() +
+  geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2)
+p.ch
+
+gg <- ggplot(df, aes(Longitude, Latitude, colour = Quinzaine))
+gg <- gg + geom_point()
+gg <- gg + geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2, linewidth =0.5)
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",title="CMP Quelmes")
+gg
+ggsave("Rplot/MCP_Depali/MCP_Quelmes.png",gg, width = 15, height = 10)
+
+
+
+#MCP Custodelle
+HGD_Custodelle <- filter(HGD_DT,periode == "Dependance alimentaire")
+HGD_Custodelle <- filter(HGD_Custodelle,bird_id == "Custodelle")
+df = HGD_Custodelle
+# Plot without convex hulls
+p = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point()
+p
+# Computing convex hulls
+s = df %>%
+  split(df$Quinzaine)  # Tranform data.frame in lists of data.frames depending on column 'bird_id'
+
+ch = s %>%
+  # Compute which points are on the convex hull of each data.frame /!\ Check how 'chull' works
+  lapply(., function(el) chull(el$Longitude, el$Latitude))  # 'ch' now contains the row numbers of points on convex hull per sub-data.frame
+
+# Get points for each sub-data.frame using names index
+ch = lapply(names(ch), function(x) s[[x]][ch[[x]],]) %>%   
+  do.call(rbind, .)  # Join all convex hull points in a single data.frame
+
+# Plot with convex hulls
+p.ch = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point() +
+  geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2)
+p.ch
+
+gg <- ggplot(df, aes(Longitude, Latitude, colour = Quinzaine))
+gg <- gg + geom_point()
+gg <- gg + geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2, linewidth =0.5)
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",title="CMP Custodelle")
+gg
+ggsave("Rplot/MCP_Depali/MCP_Custodelle.png",gg, width = 15, height = 10)
+
+
+
+#MCP Germignies A
+HGD_Germignies_A <- filter(HGD_DT,periode == "Dependance alimentaire")
+HGD_Germignies_A <- filter(HGD_Germignies_A,bird_id == "Germignies A")
+df = HGD_Germignies_A
+# Plot without convex hulls
+p = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point()
+p
+# Computing convex hulls
+s = df %>%
+  split(df$Quinzaine)  # Tranform data.frame in lists of data.frames depending on column 'bird_id'
+
+ch = s %>%
+  # Compute which points are on the convex hull of each data.frame /!\ Check how 'chull' works
+  lapply(., function(el) chull(el$Longitude, el$Latitude))  # 'ch' now contains the row numbers of points on convex hull per sub-data.frame
+
+# Get points for each sub-data.frame using names index
+ch = lapply(names(ch), function(x) s[[x]][ch[[x]],]) %>%   
+  do.call(rbind, .)  # Join all convex hull points in a single data.frame
+
+# Plot with convex hulls
+p.ch = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point() +
+  geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2)
+p.ch
+
+gg <- ggplot(df, aes(Longitude, Latitude, colour = Quinzaine))
+gg <- gg + geom_point()
+gg <- gg + geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2, linewidth =0.5)
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",title="CMP Germignies A")
+gg
+ggsave("Rplot/MCP_Depali/MCP_Germignies_A.png",gg, width = 15, height = 10)
+
+
+#MCP Germignies B
+HGD_Germignies_B <- filter(HGD_DT,periode == "Dependance alimentaire")
+HGD_Germignies_B <- filter(HGD_Germignies_B,bird_id == "Germignies B")
+df = HGD_Germignies_B
+# Plot without convex hulls
+p = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point()
+p
+# Computing convex hulls
+s = df %>%
+  split(df$Quinzaine)  # Tranform data.frame in lists of data.frames depending on column 'bird_id'
+
+ch = s %>%
+  # Compute which points are on the convex hull of each data.frame /!\ Check how 'chull' works
+  lapply(., function(el) chull(el$Longitude, el$Latitude))  # 'ch' now contains the row numbers of points on convex hull per sub-data.frame
+
+# Get points for each sub-data.frame using names index
+ch = lapply(names(ch), function(x) s[[x]][ch[[x]],]) %>%   
+  do.call(rbind, .)  # Join all convex hull points in a single data.frame
+
+# Plot with convex hulls
+p.ch = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point() +
+  geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2)
+p.ch
+
+gg <- ggplot(df, aes(Longitude, Latitude, colour = Quinzaine))
+gg <- gg + geom_point()
+gg <- gg + geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2, linewidth =0.5)
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",title="CMP Germignies B")
+gg
+ggsave("Rplot/MCP_Depali/MCP_Germignies_B.png",gg, width = 15, height = 10)
+
+
+
+#MCP Glageon Bocahut
+HGD_Glageon_Bocahut <- filter(HGD_DT,periode == "Dependance alimentaire")
+HGD_Glageon_Bocahut <- filter(HGD_Glageon_Bocahut,bird_id == "Glageon Bocahut")
+df = HGD_Glageon_Bocahut
+# Plot without convex hulls
+p = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point()
+p
+# Computing convex hulls
+s = df %>%
+  split(df$Quinzaine)  # Tranform data.frame in lists of data.frames depending on column 'bird_id'
+
+ch = s %>%
+  # Compute which points are on the convex hull of each data.frame /!\ Check how 'chull' works
+  lapply(., function(el) chull(el$Longitude, el$Latitude))  # 'ch' now contains the row numbers of points on convex hull per sub-data.frame
+
+# Get points for each sub-data.frame using names index
+ch = lapply(names(ch), function(x) s[[x]][ch[[x]],]) %>%   
+  do.call(rbind, .)  # Join all convex hull points in a single data.frame
+
+# Plot with convex hulls
+p.ch = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point() +
+  geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2)
+p.ch
+
+gg <- ggplot(df, aes(Longitude, Latitude, colour = Quinzaine))
+gg <- gg + geom_point()
+gg <- gg + geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2, linewidth =0.5)
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",title="CMP Glageon Bocahut")
+gg
+ggsave("Rplot/MCP_Depali/MCP_Glageon_Bocahut.png",gg, width = 15, height = 10)
+
+
+
+#MCP Guemy
+HGD_Guemy <- filter(HGD_DT,periode == "Dependance alimentaire")
+HGD_Guemy <- filter(HGD_Guemy,bird_id == "Guemy")
+df = HGD_Guemy
+# Plot without convex hulls
+p = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point()
+p
+# Computing convex hulls
+s = df %>%
+  split(df$Quinzaine)  # Tranform data.frame in lists of data.frames depending on column 'bird_id'
+
+ch = s %>%
+  # Compute which points are on the convex hull of each data.frame /!\ Check how 'chull' works
+  lapply(., function(el) chull(el$Longitude, el$Latitude))  # 'ch' now contains the row numbers of points on convex hull per sub-data.frame
+
+# Get points for each sub-data.frame using names index
+ch = lapply(names(ch), function(x) s[[x]][ch[[x]],]) %>%   
+  do.call(rbind, .)  # Join all convex hull points in a single data.frame
+
+# Plot with convex hulls
+p.ch = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point() +
+  geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2)
+p.ch
+
+gg <- ggplot(df, aes(Longitude, Latitude, colour = Quinzaine))
+gg <- gg + geom_point()
+gg <- gg + geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2, linewidth =0.5)
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",title="CMP Guemy")
+gg
+ggsave("Rplot/MCP_Depali/MCP_Guemy.png",gg, width = 15, height = 10)
+
+
+
+#MCP Licques
+HGD_Licques <- filter(HGD_DT,periode == "Dependance alimentaire")
+HGD_Licques <- filter(HGD_Licques,bird_id == "Licques")
+df = HGD_Licques
+# Plot without convex hulls
+p = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point()
+p
+# Computing convex hulls
+s = df %>%
+  split(df$Quinzaine)  # Tranform data.frame in lists of data.frames depending on column 'bird_id'
+
+ch = s %>%
+  # Compute which points are on the convex hull of each data.frame /!\ Check how 'chull' works
+  lapply(., function(el) chull(el$Longitude, el$Latitude))  # 'ch' now contains the row numbers of points on convex hull per sub-data.frame
+
+# Get points for each sub-data.frame using names index
+ch = lapply(names(ch), function(x) s[[x]][ch[[x]],]) %>%   
+  do.call(rbind, .)  # Join all convex hull points in a single data.frame
+
+# Plot with convex hulls
+p.ch = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point() +
+  geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2)
+p.ch
+
+gg <- ggplot(df, aes(Longitude, Latitude, colour = Quinzaine))
+gg <- gg + geom_point()
+gg <- gg + geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2, linewidth =0.5)
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",title="CMP Licques")
+gg
+ggsave("Rplot/MCP_Depali/MCP_Licques.png",gg, width = 15, height = 10)
+
+
+#MCP Loos_en_Gohelle_74A
+HGD_Loos_en_Gohelle_74A <- filter(HGD_DT,periode == "Dependance alimentaire")
+HGD_Loos_en_Gohelle_74A <- filter(HGD_Loos_en_Gohelle_74A,bird_id == "Loos-en-Gohelle 74A")
+df = HGD_Loos_en_Gohelle_74A
+# Plot without convex hulls
+p = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point()
+p
+# Computing convex hulls
+s = df %>%
+  split(df$Quinzaine)  # Tranform data.frame in lists of data.frames depending on column 'bird_id'
+
+ch = s %>%
+  # Compute which points are on the convex hull of each data.frame /!\ Check how 'chull' works
+  lapply(., function(el) chull(el$Longitude, el$Latitude))  # 'ch' now contains the row numbers of points on convex hull per sub-data.frame
+
+# Get points for each sub-data.frame using names index
+ch = lapply(names(ch), function(x) s[[x]][ch[[x]],]) %>%   
+  do.call(rbind, .)  # Join all convex hull points in a single data.frame
+
+# Plot with convex hulls
+p.ch = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point() +
+  geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2)
+p.ch
+
+gg <- ggplot(df, aes(Longitude, Latitude, colour = Quinzaine))
+gg <- gg + geom_point()
+gg <- gg + geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2, linewidth =0.5)
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",title="CMP Loos-en-Gohelle 74A")
+gg
+ggsave("Rplot/MCP_Depali/MCP_Loos_en_Gohelle_74A.png",gg, width = 15, height = 10)
+
+
+#MCP Loos_en_Gohelle_74B
+HGD_Loos_en_Gohelle_74B <- filter(HGD_DT,periode == "Dependance alimentaire")
+HGD_Loos_en_Gohelle_74B <- filter(HGD_Loos_en_Gohelle_74B,bird_id == "Loos-en-Gohelle 74B")
+df = HGD_Loos_en_Gohelle_74B
+# Plot without convex hulls
+p = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point()
+p
+# Computing convex hulls
+s = df %>%
+  split(df$Quinzaine)  # Tranform data.frame in lists of data.frames depending on column 'bird_id'
+
+ch = s %>%
+  # Compute which points are on the convex hull of each data.frame /!\ Check how 'chull' works
+  lapply(., function(el) chull(el$Longitude, el$Latitude))  # 'ch' now contains the row numbers of points on convex hull per sub-data.frame
+
+# Get points for each sub-data.frame using names index
+ch = lapply(names(ch), function(x) s[[x]][ch[[x]],]) %>%   
+  do.call(rbind, .)  # Join all convex hull points in a single data.frame
+
+# Plot with convex hulls
+p.ch = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point() +
+  geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2)
+p.ch
+
+gg <- ggplot(df, aes(Longitude, Latitude, colour = Quinzaine))
+gg <- gg + geom_point()
+gg <- gg + geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2, linewidth =0.5)
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",title="CMP Loos-en-Gohelle 74B")
+gg
+ggsave("Rplot/MCP_Depali/MCP_Loos_en_Gohelle_74B.png",gg, width = 15, height = 10)
+
+
+#MCP Nabringhen
+HGD_Nabringhen <- filter(HGD_DT,periode == "Dependance alimentaire")
+HGD_Nabringhen <- filter(HGD_Nabringhen,bird_id == "Nabringhen")
+df = HGD_Nabringhen
+# Plot without convex hulls
+p = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point()
+p
+# Computing convex hulls
+s = df %>%
+  split(df$Quinzaine)  # Tranform data.frame in lists of data.frames depending on column 'bird_id'
+
+ch = s %>%
+  # Compute which points are on the convex hull of each data.frame /!\ Check how 'chull' works
+  lapply(., function(el) chull(el$Longitude, el$Latitude))  # 'ch' now contains the row numbers of points on convex hull per sub-data.frame
+
+# Get points for each sub-data.frame using names index
+ch = lapply(names(ch), function(x) s[[x]][ch[[x]],]) %>%   
+  do.call(rbind, .)  # Join all convex hull points in a single data.frame
+
+# Plot with convex hulls
+p.ch = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point() +
+  geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2)
+p.ch
+
+gg <- ggplot(df, aes(Longitude, Latitude, colour = Quinzaine))
+gg <- gg + geom_point()
+gg <- gg + geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2, linewidth =0.5)
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",title="CMP Nabringhen")
+gg
+ggsave("Rplot/MCP_Depali/MCP_Nabringhen.png",gg, width = 15, height = 10)
+
+
+#MCP Wallers
+HGD_Wallers <- filter(HGD_DT,periode == "Dependance alimentaire")
+HGD_Wallers <- filter(HGD_Wallers,bird_id == "Wallers")
+df = HGD_Wallers
+# Plot without convex hulls
+p = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point()
+p
+# Computing convex hulls
+s = df %>%
+  split(df$Quinzaine)  # Tranform data.frame in lists of data.frames depending on column 'bird_id'
+
+ch = s %>%
+  # Compute which points are on the convex hull of each data.frame /!\ Check how 'chull' works
+  lapply(., function(el) chull(el$Longitude, el$Latitude))  # 'ch' now contains the row numbers of points on convex hull per sub-data.frame
+
+# Get points for each sub-data.frame using names index
+ch = lapply(names(ch), function(x) s[[x]][ch[[x]],]) %>%   
+  do.call(rbind, .)  # Join all convex hull points in a single data.frame
+
+# Plot with convex hulls
+p.ch = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point() +
+  geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2)
+p.ch
+
+gg <- ggplot(df, aes(Longitude, Latitude, colour = Quinzaine))
+gg <- gg + geom_point()
+gg <- gg + geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2, linewidth =0.5)
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",title="CMP Wallers")
+gg
+ggsave("Rplot/MCP_Depali/MCP_Wallers.png",gg, width = 15, height = 10)
+
+
+
+#test all oiseaux depali
+df = HGD_Depali
+# Plot without convex hulls
+p = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point()
+p
+# Computing convex hulls
+s = df %>%
+  split(df$Quinzaine)  # Tranform data.frame in lists of data.frames depending on column 'bird_id'
+
+ch = s %>%
+  # Compute which points are on the convex hull of each data.frame /!\ Check how 'chull' works
+  lapply(., function(el) chull(el$Longitude, el$Latitude))  # 'ch' now contains the row numbers of points on convex hull per sub-data.frame
+
+# Get points for each sub-data.frame using names index
+ch = lapply(names(ch), function(x) s[[x]][ch[[x]],]) %>%   
+  do.call(rbind, .)  # Join all convex hull points in a single data.frame
+
+# Plot with convex hulls
+p.ch = ggplot(df, aes(Longitude, Latitude, colour = Quinzaine)) +
+  geom_point() +
+  facet_wrap(.~bird_id) +
+  geom_polygon(data = ch, aes(fill = Quinzaine), alpha = 0.2)
+p.ch
+
+
+
+
 
 ### Domaine vitaux sous Kernel href ##################################################################################################
 
