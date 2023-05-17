@@ -87,17 +87,37 @@ ggprop <- plot(area_hab_HDF$proportion~area_hab_HDF$habitat)
 
 ### Data HGD #########################################################################################################################################
 
-#Importation des donnees
+#Importation des donnees V1
 data_HGD_original <- read.csv2("data_HGD.csv", head = T, sep = ";", stringsAsFactors = T)
 str(data_HGD_original)
-
+summary(data_HGD_original)
+plot(data_HGD_original$Affichage)
+plot(data_HGD_original$Commentair)
 
 #Nettoyage des données
 #Suppression des data ayant des problemes d'affichage
-plot(data_HGD_original$Affichage)
 data_HGD <- subset(data_HGD_original, Affichage != "NON") # j'enlève tous les NON
-data_HGD <- subset(data_HGD, Commentair != "Pas de coordonnées GPS") #j'enleve tous les "Pas de coordonnées GPS"
+data_HGD <- subset(data_HGD, Commentair != "Pas de coordonnées GPS")#j'enleve tous les "Pas de coordonnées GPS"
+data_HGD <- subset(data_HGD, Commentair != "Donnée avant balisage")#j'enleve tous les "Donnée avant balisage"
+data_HGD <- subset(data_HGD, Commentair != "Données avant balisage")#j'enleve tous les "Données avant balisage"
 summary(data_HGD)
+
+
+
+#Importation des donnees V2
+#data_HGD_original2 <- read.csv2("data_HGD_V2.csv", head = T, sep = ";", stringsAsFactors = T)
+#data_HGD_original2 <- data_HGD_original2 %>% relocate(hdop, .after = solar_I_mA)
+#str(data_HGD_original2)
+#summary(data_HGD_original2)
+#plot(data_HGD_original2$Affichage)
+#plot(data_HGD_original2$Commentair)
+
+#Nettoyage des données
+#Suppression des data ayant des problemes d'affichage
+#data_HGD <- subset(data_HGD_original2, Affichage != "NON") # j'enlève tous les NON
+#data_HGD <- subset(data_HGD, Commentair != "Pas de coordonnées GPS")#j'enleve tous les "Pas de coordonnées GPS"
+#data_HGD <- subset(data_HGD, Commentair != "Donnée avant balisage")#j'enleve tous les "Donnée avant balisage"
+#summary(data_HGD)
 
 
 
@@ -155,11 +175,15 @@ data_HGD <- data_HGD %>% relocate(date_depart, .after = time)
 
 #creation colonne dispersion/dependance alimentaire par bird_id
 #creation boucle pour separer les donnees dependance alimentaire/dispersion en fonction du jour de depart de chaque oiseau
-HGD_DT <- data_HGD[,-c(1,3,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26)]
+HGD_DT <- data_HGD[,-c(1,3,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27)]
 setDT(HGD_DT)
 periode <- ifelse(as.Date(HGD_DT$date) < as.Date(HGD_DT$date_depart), "Dependance alimentaire", "Dispersion")
 data_HGD <- cbind(data_HGD,periode)
 data_HGD <- data_HGD %>% relocate(periode, .after = date_depart)
+
+
+#nb_data_all <- data_HGD[,.(nb = .N),by=.(bird_id, periode)]
+#data_HGD <- subset(data_HGD, data_HGD$bird_id != "Glageon Bocahut")
 
 
 # Transformation des coordonnees en donnees spatiales + modification de la projection
@@ -895,6 +919,7 @@ p.ch
 library(adehabitatHR)
 library(sf)
 library(ggplot2)
+library(ggspatial)
 
 # Fond de carte departement Nord Pas-de-Calais
 NPDC <- st_read("SIG/Departement NPDC.shp")
@@ -956,9 +981,6 @@ df_30_all_h <- fortify(sdf_poly_30_all_h)
 df_30_all_h$bird_id <- df_30_all_h$id
 
 
-#install.packages("ggspatial")
-library(ggplot2)
-library(ggspatial)
 
 
 
@@ -1123,7 +1145,7 @@ Disp_sf_NPDC <- Disp_HGD_sf[,c("bird_id")]
 Disp_sf_NPDC <- st_crop(Disp_sf_NPDC,st_bbox(NPDC))
 Disp_sf_NPDC_k <- as(Disp_sf_NPDC,'Spatial')
 
-kdh_Disp_h <- kernelUD(Disp_sf_NPDC_k, h="href", grid = 2000, extent = 100)#très long
+kdh_Disp_h <- kernelUD(Disp_sf_NPDC_k, h="href", grid = 1000, extent = 100)#marche pas
 image(kdh_Disp_h)
 
 
@@ -1283,6 +1305,7 @@ df_30_all_l$bird_id <- df_30_all_l$id
 #install.packages("ggspatial")
 library(ggplot2)
 library(ggspatial)
+library(sf)
 
 
 
@@ -1438,6 +1461,15 @@ ggsave("Rplot/Kernel/Depali/kernel_NPDC_bird_LSCV.png",gg, width = 25, height = 
 
 ##### DV dispersion (Kernel)############################################################################################################################
 HGD_Disp <- filter(data_HGD,periode == "Dispersion")
+nb_data <- HGD_Disp[,.(nb = .N),by=bird_id]
+library(dplyr)
+
+#check if any bats have less than 5 relocations using dplyr
+#check<- HGD_Disp%>%group_by(bird_id)%>%summarise(nb=length(bird_id))%>%dplyr::filter(nb<6)
+#check<- as.data.frame(check)
+#HGD_Disp<-HGD_Disp %>% anti_join(check)
+# proceed with rest of code
+
 
 #Creation DV kernel Disp
 Disp_HGD_sf <- st_as_sf(HGD_Disp, coords = c("Longitude","Latitude"))
@@ -1534,6 +1566,100 @@ gg <- gg + labs(x="",y="",colour="birds",title="Kernel 95%, 50% et 30%")
 #gg <- gg + scale_fill_manual(values=vec_colour)
 gg
 ggsave("Rplot/Kernel/Disp/kernel_NPDC_bird_LSCV.png",gg, width = 25, height = 13)
+
+
+
+
+
+#essaie changement de projection
+# Fond de carte departement Nord Pas-de-Calais
+NPDC <- st_read("SIG/Departement NPDC.shp")
+NPDC <- st_make_valid(NPDC)
+NPDC <- st_transform(NPDC,crs=2154)
+NPDC <- st_make_valid(NPDC)
+
+# Fond de carte departement region Hauts-de-France
+HDF <- st_read("SIG/Departement HDF.shp")
+HDF <- st_make_valid(HDF)
+HDF <- st_transform(HDF,crs=2154)
+HDF <- st_make_valid(HDF)
+
+
+#Creation DV kernel Disp 
+Disp_HGD_sf <- st_as_sf(HGD_Disp, coords = c("Longitude","Latitude"))
+st_crs(Disp_HGD_sf) <- 4326
+Disp_HGD_sf <- st_transform(Disp_HGD_sf,crs=2154)
+Disp_sf_NPDC <- Disp_HGD_sf[,c("bird_id")]
+Disp_sf_NPDC <- st_crop(Disp_sf_NPDC,st_bbox(NPDC))
+Disp_sf_NPDC_k <- as(Disp_sf_NPDC,'Spatial')
+
+kdh_Disp_l <- kernelUD(Disp_sf_NPDC_k, h="LSCV", grid = 1000)
+image(kdh_Disp_l)
+# creating SpatialPolygonsDataFrame
+# Polygone spatial 95%
+kd_names_Disp_l <- names(kdh_Disp_l)
+ud_95_Disp_l <- lapply(kdh_Disp_l, function(x) try(getverticeshr(x, 95)))
+
+
+sapply(1:length(ud_95_Disp_l), function(i) {
+  row.names(ud_95_Disp_l[[i]]) <<- kd_names_Disp_l[i]
+})
+sdf_poly_95_Disp_l <- Reduce(rbind, ud_95_Disp_l)
+df_95_Disp_l <- fortify(sdf_poly_95_Disp_l)
+df_95_Disp_l$bird_id <- df_95_Disp_l$id
+
+#install.packages("rgdal")
+#library(rgdal)
+#SIG_Kernel <- paste("//HGD")
+#writeOGR(df_95_Disp_l, dsn = 'df_95_Disp_l', layer = 'df_95_Disp_l', driver = "ESRI Shapfile", overwrite_layer = T)
+
+library(sf)
+st_write(df_95_Disp_l, dsn = "df_95_Disp_l2154.csv", layer = "df_95_Disp_l2154.csv", driver = "CSV", overwrite_layer = T)
+#ca marche en important sur qgis sauf que ca transforme les polygones en points
+
+
+
+
+
+
+#partie raphaelle
+r <- SpatialPointsDataFrame(HGD_Disp[,11:12], data = bird_id[,1])
+plot(kdh_Disp_l)
+z <- getverticeshr(kdh_Disp_l, 95)
+class(z)
+sp::plot(z, col= 1:4)
+install.packages("rgdal")
+library(rgdal)
+writeORG(z, dsn = "y",layer = "z", driver = "ESRI Shapefile")
+write.shp(x = z, file = "y.shp")
+st_write(z, dsn = "z.csv", layer = "z.csv", driver = "ESRI Shapefile", overwrite_layer = T)
+st_write(z, "z.shp")
+
+# creating SpatialPolygonsDataFrame
+# Polygone spatial 95%
+kd_names_Disp_l <- names(kdh_Disp_l)
+ud_95_Disp_l <- lapply(kdh_Disp_l, function(x) try(getverticeshr(x, 95)))
+#class(ud_95_Disp_l)
+#sp::plot(ud_95_Disp_l, col= 1:4)
+ud_95_Disp_l <- lapply(kdh_Disp_l, function(x) try(getverticeshr(kdh_Disp_l[[1]],95)))
+
+sapply(1:length(ud_95_Disp_l), function(i) {
+  row.names(ud_95_Disp_l[[i]]) <<- kd_names_Disp_l[i]
+})
+sdf_poly_95_Disp_l <- Reduce(rbind, ud_95_Disp_l)
+df_95_Disp_l <- fortify(sdf_poly_95_Disp_l)
+df_95_Disp_l$bird_id <- df_95_Disp_l$id
+
+library(sf)
+st_write(df_95_Disp_l, dsn = "df_95_Disp_l2154.csv", layer = "df_95_Disp_l2154.csv", driver = "CSV", overwrite_layer = T)
+
+
+
+
+
+
+
+
 
 
 
