@@ -14,7 +14,7 @@ library(shiny)
 library(vegan)
 library(xtable)
 library(glmmTMB)
-
+library(tidyverse)
 
 setwd("C:/Git/HGD")
 
@@ -24,18 +24,16 @@ setwd("C:/Git/HGD")
 #calculs des surfaces par polygones
 CLC <- st_read("SIG/CLC_HDF_2018.shx", stringsAsFactors = T)
 CLC_code <- read.csv2("code_habitat.csv", head = T, sep = ";", stringsAsFactors = T)
-CLC <- CLC[,-c(1,2,4,6)]# colonne non utilise
+CLC <- CLC[,-c(1,2,4,5,6)]# colonne non utilise
 CLC <- merge(CLC, CLC_code, by = "code_18")
-CLC <- st_transform(CLC,crs=3832)#transformation des donnees
-CLC$area_poly <- st_area(CLC)
+CLC <- st_transform(CLC,crs=2154)#transformation des donnees
+CLC$area_poly_hab <- st_area(CLC)
 summary(CLC)
 
 #identifiant des polygones
 CLC$id_poly <- 1: nrow(CLC)
-CLC <- CLC %>% relocate(id_poly, .after = area_ha)
-CLC <- CLC %>% relocate(code_18, .after = habitat)
-CLC <- CLC %>% relocate(area_ha, .after = area_poly)
-
+CLC <- CLC %>% relocate(id_poly, .after = code_18)
+CLC <- CLC %>% relocate(code_18, .after = id_poly)
 
 gg <- plot(CLC$code_18)
 gg <- plot(CLC$habitat)
@@ -101,24 +99,6 @@ data_HGD <- subset(data_HGD, Commentair != "Pas de coordonnées GPS")#j'enleve t
 data_HGD <- subset(data_HGD, Commentair != "Donnée avant balisage")#j'enleve tous les "Donnée avant balisage"
 data_HGD <- subset(data_HGD, Commentair != "Données avant balisage")#j'enleve tous les "Données avant balisage"
 summary(data_HGD)
-
-
-
-#Importation des donnees V2
-#data_HGD_original2 <- read.csv2("data_HGD_V2.csv", head = T, sep = ";", stringsAsFactors = T)
-#data_HGD_original2 <- data_HGD_original2 %>% relocate(hdop, .after = solar_I_mA)
-#str(data_HGD_original2)
-#summary(data_HGD_original2)
-#plot(data_HGD_original2$Affichage)
-#plot(data_HGD_original2$Commentair)
-
-#Nettoyage des données
-#Suppression des data ayant des problemes d'affichage
-#data_HGD <- subset(data_HGD_original2, Affichage != "NON") # j'enlève tous les NON
-#data_HGD <- subset(data_HGD, Commentair != "Pas de coordonnées GPS")#j'enleve tous les "Pas de coordonnées GPS"
-#data_HGD <- subset(data_HGD, Commentair != "Donnée avant balisage")#j'enleve tous les "Donnée avant balisage"
-#summary(data_HGD)
-
 
 
 #Suppression des colonnes inutiles + Renommer certaines colonnes
@@ -332,17 +312,33 @@ boxplot(Altitude_m~bird_id)# a voir comment retravailler ce graph
 #une etude sur l'altitude des HGD et le positionnement des champs eoliens serait interessantes
 
 
+#Stat sur les donnees dispersion uniquement
+HGD_Disp <- filter(data_HGD,periode == "Dispersion")
+
+sum_HGD_disp <- HGD_Disp[,.(nb_data = .N,
+                       first = min(date),
+                       last = max(date)), by =.(bird_id)] # par oiseau: combien de donnees, premiere date et derniere date
+
+#sum_HGD_disp[,duration_days := difftime(last, first, unit = "days")]#difference de temps entre la premiere et la derniere donnee. le ":=" veut dire pas de regroupement
+
+nb_day <- HGD_Disp [,.(j = 1), by = .(bird_id, date)] # regroupement par oiseau et par date
+nb_day <- nb_day [,.(nb_day= .N), by = .(bird_id)] # nombre de jour de données 
+sum_HGD_disp <- merge(sum_HGD_disp, nb_day, bx = "bird_id")
+#fwrite(sum_HGD_disp, "table/sum_HGD_Disp_OrniTrack.csv") #deja enregistre
+
+
 
 #stat sur les donnees sum_HGD
-nb_data_tot <- sum(sum_HGD$nb_data)# 36288 donnees
+nb_data_tot <- sum(sum_HGD_disp$nb_data)# 5056 donnees
 
-median_nb_data <- median(sum_HGD$nb_data)# mediane du nombre de data par oiseau = 191
-mean_nb_data <- mean(sum_HGD$nb_data)# nombre moyen de data par oiseau = 2969,5
-min_nb_data <- min(sum_HGD$nb_data) # le plus petit nombre de data = 1259
-max_nb_data <- max(sum_HGD$nb_data) # le plus grand nombre de data = 5246
+median_nb_data <- median(sum_HGD_disp$nb_data)# mediane du nombre de data par oiseau = 429
+mean_nb_data <- mean(sum_HGD_disp$nb_data)# nombre moyen de data par oiseau = 421
+min_nb_data <- min(sum_HGD_disp$nb_data) # le plus petit nombre de data = 5
+max_nb_data <- max(sum_HGD_disp$nb_data) # le plus grand nombre de data = 827
 
-min_data_date <- min(sum_HGD$last)# la plus petite periode d'emission pour une balise = 2022_08_28 = 3 mois max par Glageon Bocahut
-max_data_date <- max(sum_HGD$last)# la plus grande periode d'emission pour une balise = 2023_02_12 = 6 mois max par loos A,loos B,quelmes,Germignie b
+min_data_date <- min(sum_HGD_disp$last)# la plus petite periode d'emission pour une balise = 2022_08_28 = 3 mois max par Glageon Bocahut
+max_data_date <- max(sum_HGD_disp$last)# la plus grande periode d'emission pour une balise = 2023_02_12 = 6 mois max par loos A,loos B,quelmes,Germignie b
+
 
 
 
@@ -1237,7 +1233,6 @@ ggsave("Rplot/Kernel/Disp/kernel_NPDC_bird_href.png",gg, width = 25, height = 13
 ### Domaine vitaux sous Kernel LSCV ##################################################################################################
 
 ##### DV all (Kernel) ############################################################################################################################
-#install.packages("adehabitatHR")
 library(adehabitatHR)
 library(sf)
 library(ggplot2)
@@ -1461,15 +1456,9 @@ ggsave("Rplot/Kernel/Depali/kernel_NPDC_bird_LSCV.png",gg, width = 25, height = 
 
 ##### DV dispersion (Kernel)############################################################################################################################
 HGD_Disp <- filter(data_HGD,periode == "Dispersion")
+HGD_Disp <- subset(HGD_Disp, HGD_Disp$bird_id != "Glageon Bocahut")
 nb_data <- HGD_Disp[,.(nb = .N),by=bird_id]
 library(dplyr)
-
-#check if any bats have less than 5 relocations using dplyr
-#check<- HGD_Disp%>%group_by(bird_id)%>%summarise(nb=length(bird_id))%>%dplyr::filter(nb<6)
-#check<- as.data.frame(check)
-#HGD_Disp<-HGD_Disp %>% anti_join(check)
-# proceed with rest of code
-
 
 #Creation DV kernel Disp
 Disp_HGD_sf <- st_as_sf(HGD_Disp, coords = c("Longitude","Latitude"))
@@ -1571,7 +1560,7 @@ ggsave("Rplot/Kernel/Disp/kernel_NPDC_bird_LSCV.png",gg, width = 25, height = 13
 
 
 
-#essaie changement de projection
+#### DV a 95% pour le rapport #############################################################################################################################
 # Fond de carte departement Nord Pas-de-Calais
 NPDC <- st_read("SIG/Departement NPDC.shp")
 NPDC <- st_make_valid(NPDC)
@@ -1585,7 +1574,11 @@ HDF <- st_transform(HDF,crs=2154)
 HDF <- st_make_valid(HDF)
 
 
-#Creation DV kernel Disp 
+#Creation DV kernel Disp
+HGD_Disp <- filter(data_HGD,periode == "Dispersion")
+#st_write(HGD_Disp, dsn = "HGD_Disp", layer = "HGD_Disp.csv", driver = "CSV", overwrite_layer = T)
+
+
 Disp_HGD_sf <- st_as_sf(HGD_Disp, coords = c("Longitude","Latitude"))
 st_crs(Disp_HGD_sf) <- 4326
 Disp_HGD_sf <- st_transform(Disp_HGD_sf,crs=2154)
@@ -1608,85 +1601,107 @@ sdf_poly_95_Disp_l <- Reduce(rbind, ud_95_Disp_l)
 df_95_Disp_l <- fortify(sdf_poly_95_Disp_l)
 df_95_Disp_l$bird_id <- df_95_Disp_l$id
 
-#install.packages("rgdal")
-#library(rgdal)
-#SIG_Kernel <- paste("//HGD")
-#writeOGR(df_95_Disp_l, dsn = 'df_95_Disp_l', layer = 'df_95_Disp_l', driver = "ESRI Shapfile", overwrite_layer = T)
 
-library(sf)
-st_write(df_95_Disp_l, dsn = "df_95_Disp_l2154.csv", layer = "df_95_Disp_l2154.csv", driver = "CSV", overwrite_layer = T)
-#ca marche en important sur qgis sauf que ca transforme les polygones en points
-
-
-
-
-
-
-#partie raphaelle
-r <- SpatialPointsDataFrame(HGD_Disp[,11:12], data = bird_id[,1])
-plot(kdh_Disp_l)
-z <- getverticeshr(kdh_Disp_l, 95)
-class(z)
-sp::plot(z, col= 1:4)
-install.packages("rgdal")
-library(rgdal)
-writeORG(z, dsn = "y",layer = "z", driver = "ESRI Shapefile")
-write.shp(x = z, file = "y.shp")
-st_write(z, dsn = "z.csv", layer = "z.csv", driver = "ESRI Shapefile", overwrite_layer = T)
-st_write(z, "z.shp")
-
-# creating SpatialPolygonsDataFrame
-# Polygone spatial 95%
-kd_names_Disp_l <- names(kdh_Disp_l)
-ud_95_Disp_l <- lapply(kdh_Disp_l, function(x) try(getverticeshr(x, 95)))
-#class(ud_95_Disp_l)
-#sp::plot(ud_95_Disp_l, col= 1:4)
-ud_95_Disp_l <- lapply(kdh_Disp_l, function(x) try(getverticeshr(kdh_Disp_l[[1]],95)))
-
-sapply(1:length(ud_95_Disp_l), function(i) {
-  row.names(ud_95_Disp_l[[i]]) <<- kd_names_Disp_l[i]
-})
 sdf_poly_95_Disp_l <- Reduce(rbind, ud_95_Disp_l)
-df_95_Disp_l <- fortify(sdf_poly_95_Disp_l)
-df_95_Disp_l$bird_id <- df_95_Disp_l$id
+sf_poly_95_Disp_l <- st_as_sf(sdf_poly_95_Disp_l)
+sf_poly_95_Disp_l_DV <- st_cast(sf_poly_95_Disp_l, "MULTIPOLYGON") %>% st_cast("POLYGON")
 
+library(tidyverse)
 library(sf)
-st_write(df_95_Disp_l, dsn = "df_95_Disp_l2154.csv", layer = "df_95_Disp_l2154.csv", driver = "CSV", overwrite_layer = T)
+
+sf_poly_95_Disp_l_DV <- sf_poly_95_Disp_l_DV %>% 
+  rownames_to_column(var="group")
+sf_poly_95_Disp_l_DV$area_DV <- st_area(sf_poly_95_Disp_l_DV)
+
+st_write(sf_poly_95_Disp_l_DV, dsn = "sf_poly_95_Disp_l_DV", layer = "sf_poly_95_Disp_l_DV.csv", driver = "CSV", overwrite_layer = T)
+
+DV_Disp <- read.csv("sf_poly_95_Disp_l_DV.csv", head = T, sep = ";", stringsAsFactors = T)
+DV_Disp <- DV_Disp[,-c(2,3,4)]
+DV_Disp <- DV_Disp %>% relocate(bird_id, .after = group)
+DV_Disp <- DV_Disp %>% relocate(group, .after = bird_id)
+DV_Disp <- merge(DV_Disp, sf_poly_95_Disp_l_DV, by = "group")
+DV_Disp <- DV_Disp[,-c(3,4)]
+DV_Disp <- DV_Disp %>% relocate(group, .after = bird_id)
+st_write(DV_Disp, dsn = "DV_Disp2", layer = "DV_Disp2.shp", driver = "ESRI Shapefile", overwrite_layer = T)
+DV_Disp<- st_as_sf(DV_Disp)
+DV_Disp <- st_transform(DV_Disp,crs=2154)
+st_crs(DV_Disp)
+
+#supression des DV > 5
+#Croisement de mes DV avec les points pour récupérer les dates
+# liste unique de tes oiseaux
+list_oiseaux = unique(Disp_HGD_sf$bird_id)
+
+res = lapply(list_oiseaux, function(x) {
+  # filtrer les deux jeux de données pour l'oiseau x
+  gps_oiseau = Disp_HGD_sf[Disp_HGD_sf$bird_id == x,]
+  dv_oiseau = DV_Disp[DV_Disp$bird_id == x,]
+  
+  inter_oiseau= st_intersection(dv_oiseau , gps_oiseau )
+  return(inter_oiseau)})
+
+res = do.call("rbind", res)
+
+# Grouper par domaine vital, et compter le nombre de jours
+res = group_by(res, group) %>%
+  mutate(nb_jour = length(unique(date)))
+         
+# Ajouter la colone ZST avec la selection des ZST > 5
+res$ZST = "No"
+res$ZST[res$nb_jour > 5] = "Yes"
+
+#tableau recapitulatid des DV > 5
+res1 <- data.frame(res)
+res1 <- unique(res1[,c("bird_id", "group", "nb_jour", "area_DV", "ZST")])
+res2 <- merge(res1, DV_Disp, by = "group")
+resSup5 = res2[res2$nb_jour > 5,]
+resSup5 <- resSup5[,-c(6,7)]
+names(resSup5)[2] <- "bird_id"
+names(resSup5)[4] <- "area_DV"
+resSup5 <- resSup5 %>% relocate(group, .after = bird_id)
+st_write(resSup5, dsn = "resSup5", layer = "resSup5.shp", driver = "ESRI Shapefile", overwrite_layer = T)
+
+
+df_resSup5 <- fortify(resSup5)
+df_resSup5$bird_id <- df_resSup5$id
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-gg <- ggplot()  + theme_bw() + facet_wrap(.~bird_id)
-##gg <- gg + geom_sf(data = COUCHE_LAGON_BLEU,aes(fill=habitat), colour=NA, size=0.2, alpha=.5)
-gg <- gg +   geom_polygon(data = df_95, aes(x = long, y = lat, color = "red", group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_50, aes(x = long, y = lat, color = "orange", group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg +   geom_polygon(data = df_30, aes(x = long, y = lat, color = "yellow", group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg + geom_sf(data = data_HGD_sf,aes(group=bird_id,colour=""),linewidth =0.8) #+ geom_path(data=dd,aes(x=X,y=Y,group=bird_id,colour= bird_id),alpha=0.2,size=0.5)
+#Vu generale des kernel Disp departement NPDC
+gg <- ggplot()  + theme_bw()
+gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
+gg <- gg +   geom_polygon(data = resSup5, aes(color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8)
 gg <- gg + annotation_scale()
-gg <- gg + labs(x="",y="",colour="birds",title="Kernel 95% and 50%")
-#gg <- gg + coord_sf(xlim = c(7284148,7288089), ylim = c( -1673693, -1671352))
-gg <- gg + scale_fill_manual(values=vec_colour)
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",colour="Birds",title="Kernel 95%, 50% et 30%")
 gg
+ggsave("Rplot/Kernel/Disp/kernel_NPDC_LSCV.png",gg, width = 25, height = 13)
+
+
+
+#### Selection des habitats selon le jour ou la nuit ################################################################################################
+
+#Assemblage des couches CLC et DV
+#st_crs(CLC)
+#st_crs(resSup5)
+#class(resSup5)
+resSup5_sf <- st_as_sf(resSup5)
+resSup5_sf <- st_transform(resSup5_sf,crs=2154)
+sum_hab <- st_intersection(CLC,resSup5_sf)
+st_write(sum_hab, dsn = "sum_hab", layer = "sum_hab.shp", driver = "ESRI Shapefile", overwrite_layer = T)
+
+#Assemblage des couches habitats + points GPS HGD
+# liste unique de tes oiseaux
+list_oiseaux2 = unique(Disp_HGD_sf$bird_id)
+
+res_hab = lapply(list_oiseaux2, function(x) {
+  # filtrer les deux jeux de données pour l'oiseau x
+  gps_oiseau = Disp_HGD_sf[Disp_HGD_sf$bird_id == x,]
+  dv_hab = sum_hab[sum_hab$bird_id == x,]
+  
+  inter_oiseau2= st_intersection(dv_hab , gps_oiseau )
+  return(inter_oiseau2)})
+
+res_hab = do.call("rbind", res_hab)
