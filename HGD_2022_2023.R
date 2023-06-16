@@ -58,7 +58,7 @@ ggprop <- plot(area_hab_HDF$proportion~area_hab_HDF$habitat)
 ### Data HGD #########################################################################################################################################
 
 #Importation des donnees
-data_HGD_original <- read.csv2("data_HGDV2.csv", head = T, sep = ";", stringsAsFactors = T)
+data_HGD_original <- read.csv2("data_HGD.csv", head = T, sep = ";", stringsAsFactors = T)
 str(data_HGD_original)
 summary(data_HGD_original)
 plot(data_HGD_original$Affichage)
@@ -242,7 +242,7 @@ library(ggspatial)
 library(dplyr)
 library(tidyverse)
 library(data.table)
-
+library(ggrepel)
 
 #Creation DV kernel Disp all
 Disp_HGD_sf <- st_as_sf(HGD_Disp, coords = c("Longitude","Latitude"))
@@ -439,8 +439,8 @@ resSup5_sf <- read_sf("resSup5/resSup5.shp")
 
 
 #recapitulatif des ZST officiel
-resSup5_summary <- setDT(res)
-resSup5_summary <- res[,.(first = min(date),last = max(date)), by =.(group)]
+resSup5_summary<- setDT(res)
+resSup5_summary <- resSup5_summary[,.(first = min(date),last = max(date)), by =.(group)]
 resSup5_summary <- merge(resSup5_summary, resSup5, by = "group")
 resSup5_summary <- resSup5_summary %>% relocate(bird_id, .after = group)
 resSup5_summary <- resSup5_summary %>% relocate(group, .after = bird_id)
@@ -459,6 +459,7 @@ gg <- gg +   geom_sf(data = resSup5_sf, aes(color = bird_id, group = group),line
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="Birds",title="ZST des HGD en dispersion dans les départements du Nord et du Pas-de-Calais issus des domaines vitaux (Kernel 95%)")
+gg <- gg + geom_label_repel(data = resSup5_sf, aes(label = group, geometry = geometry), stat = "sf_coordinates", min.segment.length = 0,colour = "black",segment.colour = "black") 
 gg
 ggsave("Rplot/Kernel/kernel_NPDC_LSCV_sup5.png",gg, width = 25, height = 13)
 
@@ -505,79 +506,92 @@ summary(CLC)
 #class(resSup5)
 resSup5_sf <- st_as_sf(resSup5)
 resSup5_sf <- st_transform(resSup5_sf,crs=2154)
-sum_hab <- st_intersection(CLC,resSup5_sf)
-sum_hab$area <- st_area(sum_hab)
-sum_hab <- data.frame(sum_hab)
+hab <- st_intersection(CLC,resSup5_sf)
+hab$area <- st_area(hab)
+hab <- hab[,-c(4,5,10,12)]
+hab$proportion <- (hab$area/hab$area_DV)
+summary(hab)
 
-data3 = group_by(sum_hab, group, habitat) %>%
-  summarise(prop_area = area / area_DV)
 
-st_write(sum_hab, dsn = "sum_hab", layer = "sum_hab.shp", driver = "ESRI Shapefile", overwrite_layer = T)
-summary(sum_hab)
+#sum_hab <- data.frame(sum_hab)
+
+#data3 = group_by(sum_hab, group, habitat) %>%
+  #summarise(prop_area = area / area_DV)
+
+#st_write(sum_hab, dsn = "sum_hab", layer = "sum_hab.shp", driver = "ESRI Shapefile", overwrite_layer = T)
+#summary(sum_hab)
 
 #Assemblage des couches habitats + points GPS HGD
 # liste unique de tes oiseaux
 list_oiseaux2 = unique(Disp_HGD_sf$bird_id)
 
-res_hab = lapply(list_oiseaux2, function(x) {
+sum_loc = lapply(list_oiseaux2, function(x) {
   # filtrer les deux jeux de données pour l'oiseau x
   gps_oiseau = Disp_HGD_sf[Disp_HGD_sf$bird_id == x,]
-  dv_hab = sum_hab[sum_hab$bird_id == x,]
+  dv_hab = hab[hab$bird_id == x,]
   
   inter_oiseau2= st_intersection(dv_hab , gps_oiseau )
   return(inter_oiseau2)})
 
-res_hab = do.call("rbind", res_hab)
+sum_loc = do.call("rbind", sum_loc)
+
+
+# regroupement du nombre d'occurence par polygone, par oiseau, par jour
+setDT(sum_loc)
+sum_loc_poly <- sum_loc[,.(occurence = .N),by=.(objectid,bird_id)][,.(occurence = .N),by=.(objectid)]
+
+hab <- merge(hab, sum_loc_poly, bx = "objectid", all.x = T)
+hab$occurence[is.na(hab$occurence)] <- 0
+#hab <- hab %>% relocate(occurence, .after = habitat)
+
+hab_DT <- hab
+setDT(hab_DT)
+hab_DT[,occupation := occurence>0]
+
+## la methode en une ligne de RL
+hab_DT[,proportion := as.numeric(proportion)]
+d_gg <- hab_DT[,.(prop_mean = mean(proportion),prop_med = median(proportion),inf95 = quantile(proportion, 0.025),sup95 = quantile(proportion, 0.975)), by=.(habitat,occupation)]
+
+
+
+
+# Figure comparaison des habitats composant les motus occupes et non occupes
+library(ggplot2); library(units)
+gg <- ggplot(data = d_gg, aes(x = habitat, y = prop_mean,fill = occupation,colour=occupation,group=occupation))
+gg <- gg + geom_errorbar(aes(ymin = inf95, ymax = sup95),width = 0.5,alpha=.5,linewidth=1)
+gg <- gg +  geom_point(alpha=.8,size=2)
+gg <- gg + labs(y = "Proportion mean", x = "Habitats")
+gg
 
 
 
 #Analyse sans daynight
 #Distribution des localisations par habitat
-distri_loc_hab <- sum_loc[,-c(1,2,4,5,7,8,9,10,11,12,13,15,16,17,18,19,20,21,22,23,24,25,26,27)]# j'enleve toutes les colonne sauf habitat, proportion, bird_id et geometry
+distri_loc_hab <- sum_loc[,-c(1,2,3,4,7,8,9,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37)]# j'enleve toutes les colonne sauf habitat, proportion, bird_id et geometry
 distri_loc_hab <- distri_loc_hab %>% relocate(habitat, .after = bird_id)
 distri_loc_hab <- distri_loc_hab %>% relocate(proportion, .after = habitat)
 
 
-
 #  tableau occurence par habitat par oiseau
-library(data.table)
 setDT(distri_loc_hab)
-tab_hab <- distri_loc_hab[,.(nb = .N),by=.(bird_id,habitat)]#.N = nombre de
+tab_hab <- distri_loc_hab[,.(nb = .N),by=.(bird_id,habitat)]#.N = on compte le nombre de fois que chaque habitat revient pour chaque oiseau
 
 
 # barre de reference : habitat de l'ensemble des ZST
-area_habitat <- aggregate(area_poly~habitat, rangi, sum)
-area_habitat$proportion <- area_habitat$area_poly/sum(area_habitat$area_poly)
+area_habitat <- aggregate(area~habitat, hab, sum)
+area_habitat$proportion <- area_habitat$area/sum(area_habitat$area)
 area_habitat <- area_habitat[,-c(2)]
 setDT(area_habitat)
-area_habitat[,bird_id := "habitat"]
+area_habitat[,bird_id := "ZST habitat"]
 area_habitat[,nb := as.numeric(proportion)]
-area_habitat <- area_habitat[ !(habitat %in% c("ocean","lagoon","blue_lagoon","shallow")),]
 
 setcolorder(area_habitat,c("bird_id","habitat","nb"))
 tab_hab <- bind_rows(tab_hab, area_habitat)
 
 
-# barre de reference : habitat par motus occupés
-sum_loc_occ <- aggregate(occurence~id_motu, rangi_DT, sum)
-sum_loc_occ <- subset(sum_loc_occ, !(occurence == 0))
-colnames(sum_loc_occ)[2] <- "occurence_motu"
-
-sum_loc_occ1 <- merge(rangi, sum_loc_occ, by = "id_motu")
-area_motu_occ <- aggregate(area_poly~habitat, sum_loc_occ1, sum)
-area_motu_occ$proportion <- area_motu_occ$area_poly/sum(area_motu_occ$area_poly)
-area_motu_occ <- area_motu_occ[,-c(2)]
-setDT(area_motu_occ)
-area_motu_occ[,bird_id := "habitat_motu_occupe"]
-area_motu_occ[,nb := as.numeric(proportion)]
-area_motu_occ <- area_motu_occ[ !(habitat %in% c("ocean","lagoon","blue_lagoon","shallow")),]
-
-tab_hab <- bind_rows(tab_hab, area_motu_occ)
-
-
 
 #couleur par habitat
-tab_fill  <- read.csv("library/colour_habitat.csv")
+tab_fill  <- read.csv("library/colour_habitat.csv", sep = ";")
 vec_fill <- tab_fill$colour
 names(vec_fill) <- tab_fill$habitat
 
@@ -592,7 +606,7 @@ setDF(distri_loc_hab)
 ggdistrib <- ggplot(data = tab_hab,aes(x = nb, y = bird_id, fill = habitat))
 ggdistrib <- ggdistrib + geom_bar( colour = NA, stat="identity", position = "fill")
 ggdistrib <- ggdistrib + scale_fill_manual(values = vec_fill)
-ggdistrib <- ggdistrib + scale_y_discrete(breaks = c("habitat_motu_occupe", "habitat",tab_bird[,bird_id]),labels= c("habitat_motu_occupe", "habitat",tab_bird[,label]))
+ggdistrib <- ggdistrib + scale_y_discrete(breaks = c("habitat_DV", "habitat",tab_bird[,bird_id]),labels= c("habitat_DV", "habitat",tab_bird[,label]))
 ggdistrib <- ggdistrib + labs(fill ="", y = "", x="")
 ggdistrib
 
@@ -602,26 +616,24 @@ ggdistrib
 
 
 # Analyse avec daynight
-distri_loc_hab <- sum_loc[,-c(1,2,4,5,7,8,9,10,11,12,13,15,16,17,18,19,20,21,22,24,25,26,27)]
-distri_loc_hab <- distri_loc_hab %>% relocate(habitat, .after = bird_id)
-distri_loc_hab <- distri_loc_hab %>% relocate(proportion, .after = habitat)
-distri_loc_hab <- subset(distri_loc_hab, distri_loc_hab$bird_id != "C09")
+distri_loc_hab <- sum_loc[,-c(1,2,3,4,7,8,9,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32,33,34,35,36,37)]
+#distri_loc_hab <- distri_loc_hab %>% relocate(habitat, .after = bird_id)
+#distri_loc_hab <- distri_loc_hab %>% relocate(proportion, .after = habitat)
 
 library(data.table)
 setDT(distri_loc_hab)
 tab_daynight <- distri_loc_hab[,.(nb = .N),by=.(bird_id,habitat,day_night)]
-tab_daynight <- tab_daynight[ !(habitat %in% c("ocean","lagoon","blue_lagoon","shallow")),]
 
 
 setDF(area_habitat)
-# barre de reference : habitat de l'ensemble des motus par J/N
+# barre de reference : habitat de l'ensemble des DV par J/N
 area_habitat_day <- area_habitat
 setDT(area_habitat_day)
-area_habitat_day [,day_night := "day"]
+area_habitat_day [,day_night := "Jour"]
 
 area_habitat_night <- area_habitat
 setDT(area_habitat_night)
-area_habitat_night [,day_night := "night"]
+area_habitat_night [,day_night := "Nuit"]
 
 setDT(area_habitat)
 
@@ -629,38 +641,13 @@ area_habitat_dn <- bind_rows(area_habitat_day, area_habitat_night)
 tab_daynight <- bind_rows(tab_daynight, area_habitat_dn)
 
 
-
-
-
-# barre de reference : habitat par motus occupés par J/N
-sum_loc_daynight <- sum_loc[,.(occurence = .N),by=.(id_poly,bird_id,date_HH, day_night)][,.(occurence = .N),by=.(id_poly, day_night)]
-rangi_daynight <- merge(rangi, sum_loc_daynight, by = "id_poly", all.x = T)
-rangi_daynight$occurence[is.na(rangi_daynight$occurence)] <- 0
-rangi_daynight <- subset(rangi_daynight, !(occurence.x == 0))
-
-area_motu_occ_dn <- aggregate(area_poly~habitat + day_night, rangi_daynight, sum)
-area_motu_occ_dn$proportion <- area_motu_occ_dn$area_poly/sum(area_motu_occ_dn$area_poly)
-area_motu_occ_dn <- area_motu_occ_dn[,-c(3)]
-setDT(area_motu_occ_dn)
-area_motu_occ_dn[,bird_id := "habitat_motu_occupe"]
-area_motu_occ_dn[,nb := as.numeric(proportion)]
-area_motu_occ_dn <- area_motu_occ_dn[ !(habitat %in% c("ocean","lagoon","blue_lagoon","shallow")),]
-area_motu_occ_dn <- area_motu_occ_dn %>% relocate(proportion, .after = nb)
-area_motu_occ_dn <- area_motu_occ_dn %>% relocate(habitat, .after = bird_id)
-area_motu_occ_dn <- area_motu_occ_dn %>% relocate(day_night, .after = habitat)
-
-tab_daynight <- bind_rows(tab_daynight, area_motu_occ_dn)
-
-
-
 #nombre de donnees par oiseau en fonction J/N
 library(tidyr)
 tab_bird_dn <- sum_loc[,.(occurence = .N),by=.(bird_id, day_night)]
-tab_bird_dn <- subset(tab_bird_dn, tab_bird_dn$bird_id != "C09")
 tab_bird_dn <- pivot_wider(tab_bird_dn, names_from = "day_night", values_from = "occurence")
 
 setDT(tab_bird_dn)
-tab_bird_dn[,label := paste0(bird_id," (",day," , ",night,")")]
+tab_bird_dn[,label := paste0(bird_id," (",Jour," , ",Nuit,")")]
 
 
 
@@ -668,7 +655,15 @@ tab_bird_dn[,label := paste0(bird_id," (",day," , ",night,")")]
 ggdistrib <- ggplot(data = tab_daynight,aes(x = nb, y = bird_id, fill = habitat))+facet_grid(.~day_night)
 ggdistrib <- ggdistrib + geom_bar( colour = NA, stat="identity", position = "fill")
 ggdistrib <- ggdistrib + scale_fill_manual(values = vec_fill)
-ggdistrib <- ggdistrib + scale_y_discrete(breaks = c("habitat_motu_occupe", "habitat",tab_bird_dn[,bird_id]),labels= c("habitat_motu_occupe", "habitat",tab_bird_dn[,label]))
+ggdistrib <- ggdistrib + scale_y_discrete(breaks = c("habitat_DV", "habitat",tab_bird_dn[,bird_id]),labels= c("habitat_DV", "habitat",tab_bird_dn[,label]))
 ggdistrib <- ggdistrib + labs(fill ="", y = "", x="")
 ggdistrib
 #ggsave("Rplot/distrib_loc_jn2.png",ggdistrib)
+
+
+ggdistrib <- ggplot(data = tab_daynight,aes(x = nb, y = bird_id, fill = habitat))+facet_grid(.~day_night)
+ggdistrib <- ggdistrib + geom_bar( colour = NA, stat="identity", position = "fill")
+ggdistrib <- ggdistrib + scale_fill_manual(values = vec_fill)
+ggdistrib <- ggdistrib + scale_y_discrete(c(tab_bird_dn[,bird_id]),labels= c(tab_bird_dn[,label]))
+ggdistrib <- ggdistrib + labs(fill ="", y = "", x="")
+ggdistrib
