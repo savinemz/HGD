@@ -232,6 +232,8 @@ summary(HGD_Disp)
 nb_data <- HGD_Disp[,.(nb = .N),by=bird_id]
 
 
+#Sauvegarde des donnees en dispersion
+#fwrite(HGD_Disp, "table/HGD_Disp.csv")
 
 
 ### Estimation des DV en dispersion (Kernel : LSCV) ############################################################################################################
@@ -447,6 +449,19 @@ resSup5_summary <- resSup5_summary %>% relocate(group, .after = bird_id)
 #st_write(resSup5_summary, dsn = "resSup5_summary", layer = "resSup5_summary.csv", driver = "CSV", overwrite_layer = T)
 
 
+#Creation de centroides
+resSup5_sf <- st_as_sf(resSup5)
+resSup5_sf <- st_transform(resSup5_sf,crs=2154)
+centro <- st_centroid(resSup5)
+
+
+#Graphique: duree de sejour moyen dans les ZST
+boxplot(resSup5$nb_jour)
+boxplot(resSup5$nb_jour~resSup5$bird_id, ylab="Nombre de jour" , xlab="Bird")
+summary(resSup5)
+ggsave("Rplot/nb_jour_ZST.png",resSup5, width = 10, height = 5)
+
+
 
 
 ##### Cartographie ###########################################################################################################################
@@ -512,14 +527,6 @@ hab <- hab[,-c(4,5,10,12)]
 hab$proportion <- (hab$area/hab$area_DV)
 summary(hab)
 
-
-#sum_hab <- data.frame(sum_hab)
-
-#data3 = group_by(sum_hab, group, habitat) %>%
-  #summarise(prop_area = area / area_DV)
-
-#st_write(sum_hab, dsn = "sum_hab", layer = "sum_hab.shp", driver = "ESRI Shapefile", overwrite_layer = T)
-#summary(sum_hab)
 
 #Assemblage des couches habitats + points GPS HGD
 # liste unique de tes oiseaux
@@ -652,18 +659,50 @@ tab_bird_dn[,label := paste0(bird_id," (",Jour," , ",Nuit,")")]
 
 
 # representation graphique de la distribution des localisations par habitat et par habitat des motus occupes en fonction J/N
-ggdistrib <- ggplot(data = tab_daynight,aes(x = nb, y = bird_id, fill = habitat))+facet_grid(.~day_night)
-ggdistrib <- ggdistrib + geom_bar( colour = NA, stat="identity", position = "fill")
-ggdistrib <- ggdistrib + scale_fill_manual(values = vec_fill)
-ggdistrib <- ggdistrib + scale_y_discrete(breaks = c("habitat_DV", "habitat",tab_bird_dn[,bird_id]),labels= c("habitat_DV", "habitat",tab_bird_dn[,label]))
-ggdistrib <- ggdistrib + labs(fill ="", y = "", x="")
-ggdistrib
-#ggsave("Rplot/distrib_loc_jn2.png",ggdistrib)
+ggdistrib1 <- ggplot(data = tab_daynight,aes(x = nb, y = bird_id, fill = habitat))+facet_grid(.~day_night)
+ggdistrib1 <- ggdistrib1 + geom_bar( colour = NA, stat="identity", position = "fill")
+ggdistrib1 <- ggdistrib1 + scale_fill_manual(values = vec_fill)
+#ggdistrib <- ggdistrib1 + scale_y_discrete(breaks = c("habitat_DV", "habitat",tab_bird_dn[,bird_id]),labels= c("habitat_DV", "habitat",tab_bird_dn[,label]))
+ggdistrib1 <- ggdistrib1 + labs(fill ="", y = "", x="")
+ggdistrib1
+
+ggsave("Rplot/ggdistrib1.png",ggdistrib1, width = 10, height = 5)
 
 
-ggdistrib <- ggplot(data = tab_daynight,aes(x = nb, y = bird_id, fill = habitat))+facet_grid(.~day_night)
-ggdistrib <- ggdistrib + geom_bar( colour = NA, stat="identity", position = "fill")
-ggdistrib <- ggdistrib + scale_fill_manual(values = vec_fill)
-ggdistrib <- ggdistrib + scale_y_discrete(c(tab_bird_dn[,bird_id]),labels= c(tab_bird_dn[,label]))
-ggdistrib <- ggdistrib + labs(fill ="", y = "", x="")
-ggdistrib
+ggdistrib2 <- ggplot(data = tab_daynight,aes(x = nb, y = bird_id, fill = habitat))+facet_grid(.~day_night)
+ggdistrib2 <- ggdistrib2 + geom_bar( colour = NA, stat="identity", position = "fill")
+ggdistrib2 <- ggdistrib2 + scale_fill_manual(values = vec_fill)
+#ggdistrib2 <- ggdistrib2 + scale_y_discrete(breaks = c("ZST habitat", tab_bird_dn[,bird_id]),labels= c("ZST habitat", tab_bird_dn[,label]))
+ggdistrib2 <- ggdistrib2 + labs(fill ="", y = "", x="")
+ggdistrib2
+
+
+
+
+
+
+
+### Pression electrocution #################################################################################################################################################
+
+#importation de ma couche buffer de 100m autour de mes lignes cree a partir de qgis + modification de la projection
+BT <- st_read("SIG/Buffer_100m_ligne.shp")
+BT_sf <- st_as_sf(BT)
+BT_sf <- st_transform(BT_sf,crs=2154)
+
+# modification de la projection de la couche habitat
+hab_sf <- st_as_sf(hab)
+hab_sf <- st_transform(hab_sf,crs=2154)
+
+#Intersection entre la couche habitat et mes buffer de 100m
+BT_hab <- st_intersection(BT_sf,hab_sf)
+#st_write(BT_hab, dsn = "BT_hab", layer = "BT_hab.shp", driver = "ESRI Shapefile", overwrite_layer = T)
+
+
+
+
+
+
+
+
+
+

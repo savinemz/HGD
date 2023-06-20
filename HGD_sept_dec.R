@@ -232,6 +232,10 @@ summary(HGD_Disp)
 nb_data <- HGD_Disp[,.(nb = .N),by=bird_id]
 
 
+#Sauvegarde des donnees en dispersion
+fwrite(HGD_Disp, "table/HGD_Disp.csv")
+
+
 
 
 ### Estimation des DV en dispersion (Kernel : LSCV) ############################################################################################################
