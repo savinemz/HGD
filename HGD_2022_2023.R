@@ -738,7 +738,7 @@ ggdistrib2
 
 
 ### Pression electrocution #################################################################################################################################################
-
+##### Proportion habitat par ZST ################################################################################################################
 #importation de ma couche buffer de 100m autour de mes lignes cree a partir de qgis + modification de la projection
 BT <- st_read("SIG/Buffer_100m_ligne.shp")
 BT_sf <- st_transform(BT,crs=2154)
@@ -765,15 +765,15 @@ names(area_hab)[1] <- "habitat"
 names(area_hab)[2] <- "group"
 setDT(area_hab)
 
-# Aire totale des buffer de 100m dans les ZST
+# Aire totale des buffer de 100m par ZST (group)
 area_group <- aggregate(area_poly~BT_hab$group, BT_hab, sum)
 names(area_group)[1] <- "group"
 names(area_group)[2] <- "area_buffer"
 setDT(area_group)
 
-#merge + calcul des proportions de chaque habitat des buffer dans les ZST
+#merge + calcul des proportions de chaque habitat des buffer par ZST (group)
 BT_area <- merge(area_hab, area_group, by = "group")
-# Calcul des proportions d'habitat par buffer de 100m dans les ZST
+# Calcul des proportions d'habitat par buffer de 100m par ZST (group)
 BT_area$proportion <- (BT_area$area_poly/BT_area$area_buffer)
 BT_prop_hab <- unique(BT_area[,c("group", "habitat", "proportion")])
 BT_prop_hab$proportion <- as.numeric(BT_prop_hab$proportion)
@@ -781,7 +781,7 @@ BT_prop_hab$pourcentage <- percent(BT_prop_hab$proportion, accuracy = 1)
 BT_prop_hab <- subset(BT_prop_hab, BT_prop_hab$pourcentage!= "0%")
 
 
-# representation graphique de la proportion des habitats sur un rayon de 100m autour des lignes basses tensions dans les ZST
+# representation graphique de la proportion des habitats sur un rayon de 100m autour des lignes basses tensions par ZST (group)
 ggdistrib <- ggplot(data = BT_prop_hab,aes(x = proportion, y = group, fill = habitat))
 ggdistrib <- ggdistrib + geom_bar( colour = NA, stat="identity", position = "fill")
 ggdistrib <- ggdistrib + scale_fill_manual(values = vec_fill)
@@ -789,6 +789,25 @@ ggdistrib <- ggdistrib + labs(fill ="Habitats", y = "", x="")
 ggdistrib <- ggdistrib + geom_text(data = BT_prop_hab, aes(label = pourcentage), size=4, position = position_stack(vjust = 0.5))
 ggdistrib
 ggsave("Rplot/BT_prop_hab.png",ggdistrib, width = 15, height = 7)
+
+
+
+
+
+##### Proportion habitat ensemble des ZST #######################################################################################################
+# Somme des aires par habitat pour l'ensemble de mes ZST
+area_hab_tot <- aggregate(area_poly~BT_hab$habitat, BT_hab, sum)
+names(area_hab_tot)[1] <- "habitat"
+setDT(area_hab_tot)
+
+# Aire totale des buffer de 100m pour l'ensemble de mes ZST
+area_hab_tot = group_by(area_hab_tot) %>%
+  mutate(tot_area = sum(area_poly))
+
+## Calcul des proportions d'habitat par buffer de 100m pour l'ensemble de mes ZST
+area_hab_tot$proportion <- (area_hab_tot$area_poly/area_hab_tot$tot_area)
+area_hab_tot$proportion <- as.numeric(area_hab_tot$proportion)
+area_hab_tot$pourcentage <- percent(area_hab_tot$proportion, accuracy = 1)
 
 
 
