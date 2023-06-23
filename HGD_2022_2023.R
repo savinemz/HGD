@@ -99,6 +99,8 @@ data_HGD[,time:= as.character(time)]
 data_HGD <- data_HGD[,-c(3,27,28,29,30)]
 str(data_HGD)
 
+#suppression des dates après le 15 janvier = transition entre la période post-natale et prénuptiale
+data_HGD <- filter(data_HGD,date < "2023-01-16")
 
 #selection des satcount = nombre de satellite = fiabilite du point (minimum 8)
 data_HGD <- filter(data_HGD,satcount > 7)
@@ -135,25 +137,26 @@ data_HGD <- data_HGD %>% relocate(periode, .after = date_depart)
 
 
 #Nombre de donnees par oiseau en fonction de la periode (dependance alimentaire/dispersion)
-nb_data_all <- data_HGD[,.(nb = .N),by=.(bird_id, periode)]
+nb_data_periode_bird <- data_HGD[,.(nb = .N),by=.(bird_id, periode)]
+#fwrite(nb_data_periode_bird, "table/nb_data_periode_bird.csv")
 
-#Nombre de donnes par heure par oiseau
+#Nombre de donnees par heure par oiseau sur l'ensemble de la periode jusqu'au 15 janvier
 setDT(data_HGD)
 nb_data_HH <- data_HGD [,.(nb_data_HH = .N), by = .(bird_id, date_HH)]
 nb_data_HH[,nb_data_HH := as.numeric(nb_data_HH)]
 
-# figure nombre de donnees par heure par oiseaux
+# figure nombre de donnees par heure par oiseaux sur l'ensemble de la periode jusqu'au 15 janvier
 library(ggplot2)
 gg <- ggplot(nb_data_HH,aes(x=nb_data_HH,y=bird_id)) + geom_violin()
-gg <- gg + labs(y = "Bird_id", x = "Number of data per hour")
+gg <- gg + labs(y = "Bird_id", x = "Nombre de données par heure")
 gg
 #ggsave("Rplot/nb_data_HH.png",gg)
 
 
 
-### figure nombre de donnees par oiseau par jour par J/N sur l'ensemble de la periode ##########################################################################################################
-nb_data_j_daynight <- data_HGD [,.(nb_data_jour = .N), by = .(bird_id, date, day_night)]#comme on parle de J/N après, c'est interessant de savoir comment sont distribues les donnees
-all_date <- expand.grid(bird_id = unique(data_HGD[, bird_id]), date = seq(as.Date(min(data_HGD$date)), as.Date(max(data_HGD$date)),1), day_night = c("Jour", "Nuit"))#pb d'affichage
+# Figure nombre de donnees par oiseau par jour par J/N sur l'ensemble de la periode jusqu'au 15 janvier
+nb_data_j_daynight <- data_HGD [,.(nb_data_jour = .N), by = .(bird_id, date, day_night)]
+all_date <- expand.grid(bird_id = unique(data_HGD[, bird_id]), date = seq(as.Date(min(data_HGD$date)), as.Date(max(data_HGD$date)),1), day_night = c("Jour", "Nuit"))
 all_date$date <- as.character(all_date$date)
 nb_data_j_daynight <- merge(nb_data_j_daynight, all_date, by = c("bird_id","date", "day_night"), all = T)
 nb_data_j_daynight$nb_data_jour[is.na(nb_data_j_daynight$nb_data_jour)] <- 0
@@ -174,13 +177,44 @@ gg
 HGD_Disp <- filter(data_HGD,periode == "Dispersion")
 
 
-
-#Nombre de donnes par heure par oiseau en dispersion
+#Nombre de donnees par heure par oiseau sur la periode dispersion post-natale
 setDT(HGD_Disp)
 nb_data_HH <- HGD_Disp [,.(nb_data_HH = .N), by = .(bird_id, date_HH)]
 nb_data_HH[,nb_data_HH := as.numeric(nb_data_HH)]
 
-# figure nombre de donnees par heure par oiseaux en dispersion
+# figure nombre de donnees par heure par oiseaux sur la periode dispersion post-natale
+library(ggplot2)
+gg <- ggplot(nb_data_HH,aes(x=nb_data_HH,y=bird_id)) + geom_violin()
+gg <- gg + labs(y = "Bird_id", x = "Nombre de données par heure")
+gg
+#ggsave("Rplot/nb_data_HH_dispersion.png",gg)
+
+
+
+# Figure nombre de donnees par oiseau par jour par J/N sur la periode de dispersion post-natale
+nb_data_j_daynight <- HGD_Disp [,.(nb_data_jour = .N), by = .(bird_id, date, day_night)]
+all_date <- expand.grid(bird_id = unique(HGD_Disp[, bird_id]), date = seq(as.Date(min(HGD_Disp$date)), as.Date(max(HGD_Disp$date)),1), day_night = c("Jour", "Nuit"))
+all_date$date <- as.character(all_date$date)
+nb_data_j_daynight <- merge(nb_data_j_daynight, all_date, by = c("bird_id","date", "day_night"), all = T)
+nb_data_j_daynight$nb_data_jour[is.na(nb_data_j_daynight$nb_data_jour)] <- 0
+
+library(ggplot2)
+gg <- ggplot(data = nb_data_j_daynight, aes(x = as.Date(date), y = nb_data_jour, colour = day_night, group = day_night))
+gg <- gg + geom_point()
+gg <- gg + geom_line()
+gg <- gg + facet_grid(bird_id~.)
+gg <- gg + geom_point(data = subset(nb_data_j_daynight, nb_data_jour == 0), colour = "white", size = 0.8, alpha = 0.5)
+gg <- gg + labs(x= "week", y= "number of localisation per week")
+gg
+#ggsave("Rplot/nb_data_daynight_dispersion.png",gg, width = 25, height = 13)
+
+
+#Nombre de donnes par heure par oiseau en dispersion post-natale
+setDT(HGD_Disp)
+nb_data_HH <- HGD_Disp [,.(nb_data_HH = .N), by = .(bird_id, date_HH)]
+nb_data_HH[,nb_data_HH := as.numeric(nb_data_HH)]
+
+# figure nombre de donnees par heure par oiseaux en dispersion post-natale
 library(ggplot2)
 gg <- ggplot(nb_data_HH,aes(x=nb_data_HH,y=bird_id)) + geom_violin()
 gg <- gg + labs(y = "Bird_id", x = "Number of data per hour")
@@ -189,7 +223,7 @@ gg
 
 
 
-##### Tableau description donnees HGD en Dispersion #####################################################################################################
+##### Tableau description donnees HGD en Dispersion post-natale #####################################################################################################
 library(data.table)
 sum_HGD <- HGD_Disp[,.(nb_data = .N,
                               first = min(date),
@@ -208,12 +242,12 @@ sum_HGD_daynight <- HGD_Disp[,.(nb_data = .N), by =.(bird_id, day_night)]
 
 
 #stat sur les donnees sum_HGD
-nb_data_tot <- sum(sum_HGD$nb_data)# 4965 donnees
+nb_data_tot <- sum(sum_HGD$nb_data)# 4666 donnees
 
-median_nb_data <- median(sum_HGD$nb_data)# mediane du nombre de data par oiseau = 427
-mean_nb_data <- mean(sum_HGD$nb_data)# nombre moyen de data par oiseau = 409
+median_nb_data <- median(sum_HGD$nb_data)# mediane du nombre de data par oiseau = 402
+mean_nb_data <- mean(sum_HGD$nb_data)# nombre moyen de data par oiseau = 389
 min_nb_data <- min(sum_HGD$nb_data) # le plus petit nombre de data = 5
-max_nb_data <- max(sum_HGD$nb_data) # le plus grand nombre de data = 827
+max_nb_data <- max(sum_HGD$nb_data) # le plus grand nombre de data = 808
 
 min_data_date <- min(sum_HGD$last)# la plus petite periode d'emission pour une balise = 2022_08_28 = 3 mois max par Glageon Bocahut
 max_data_date <- max(sum_HGD$last)# la plus grande periode d'emission pour une balise = 2023_02_12 = 6 mois max par loos A,loos B,quelmes,Germignie b
@@ -229,10 +263,8 @@ summary(HGD_Disp)
 
 
 # Nombre de donnees par oiseaux en dispersion
-nb_data <- HGD_Disp[,.(nb = .N),by=bird_id]
-
-
-#Sauvegarde des donnees en dispersion
+nb_data_disp <- HGD_Disp[,.(nb = .N),by=bird_id]
+#fwrite(nb_data_disp, "table/nb_data_disp.csv")
 #fwrite(HGD_Disp, "table/HGD_Disp.csv")
 
 
@@ -245,6 +277,7 @@ library(dplyr)
 library(tidyverse)
 library(data.table)
 library(ggrepel)
+install.packages("scales")
 
 #Creation DV kernel Disp all
 Disp_HGD_sf <- st_as_sf(HGD_Disp, coords = c("Longitude","Latitude"))
@@ -308,7 +341,7 @@ HDF <- st_transform(HDF,crs=2154)
 HDF <- st_make_valid(HDF)
 
 
-#Vu generale des kernel Disp departement NPDC
+#Vu generale des kernel Disp departement NPDC 95%, 50%, 30%
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
 gg <- gg +   geom_polygon(data = df_95_Disp_all, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
@@ -321,6 +354,16 @@ gg <- gg + labs(x="",y="",colour="Birds",title="Domaines vitaux des HGD en dispe
 gg
 ggsave("Rplot/Kernel/kernel_NPDC_LSCV.png",gg, width = 25, height = 13)
 
+#Vu generale des kernel Disp departement NPDC 95%
+gg <- ggplot()  + theme_bw()
+gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
+gg <- gg +   geom_polygon(data = df_95_Disp_all, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) 
+gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",colour="Birds",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95%)")
+gg
+ggsave("Rplot/Kernel/kernel_NPDC_LSCV_95.png",gg, width = 20, height = 11)
 
 #Vu generale des kernel Disp region HDF
 gg <- ggplot()  + theme_bw()
@@ -427,6 +470,7 @@ res = group_by(res, group) %>%
 res$ZST = "No"
 res$ZST[res$nb_jour > 5] = "Yes"
 
+
 #tableau recapitulatid des DV > 5
 res1 <- data.frame(res)
 res1 <- unique(res1[,c("bird_id", "group", "nb_jour", "area_DV", "ZST")])
@@ -438,6 +482,11 @@ names(resSup5)[4] <- "area_DV"
 resSup5 <- resSup5 %>% relocate(group, .after = bird_id)
 #st_write(resSup5, dsn = "resSup5", layer = "resSup5.shp", driver = "ESRI Shapefile", overwrite_layer = T)
 resSup5_sf <- read_sf("resSup5/resSup5.shp")
+
+#Renommer les ZST
+rename_ZST <- read.csv("Rename_ZST.csv", head = T, sep = ";", stringsAsFactors = T)
+resSup5_sf <- merge(resSup5_sf, rename_ZST, by = "group")
+resSup5_sf <- resSup5_sf %>% relocate(rename, .after = group)
 
 
 #recapitulatif des ZST officiel
@@ -466,7 +515,7 @@ ggsave("Rplot/nb_jour_ZST.png",resSup5, width = 10, height = 5)
 
 ##### Cartographie ###########################################################################################################################
 
-#Cartographie des kernel Disp departement NPDC ZST > 5 sans les point gps
+#Cartographie des kernel Disp departement NPDC ZST > 5 sans les point gps mais avec étiquette
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
 gg <- gg +   geom_sf(data = resSup5_sf, aes(color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
@@ -474,9 +523,9 @@ gg <- gg +   geom_sf(data = resSup5_sf, aes(color = bird_id, group = group),line
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="Birds",title="ZST des HGD en dispersion dans les départements du Nord et du Pas-de-Calais issus des domaines vitaux (Kernel 95%)")
-gg <- gg + geom_label_repel(data = resSup5_sf, aes(label = group, geometry = geometry), stat = "sf_coordinates", min.segment.length = 0,colour = "black",segment.colour = "black") 
+gg <- gg + geom_label_repel(data = resSup5_sf, aes(label = rename, geometry = geometry), stat = "sf_coordinates", min.segment.length = 0,colour = "black",segment.colour = "black") 
 gg
-ggsave("Rplot/Kernel/kernel_NPDC_LSCV_sup5.png",gg, width = 25, height = 13)
+ggsave("Rplot/Kernel/kernel_NPDC_LSCV_sup5_etiquette.png",gg, width = 25, height = 13)
 
 
 #Cartographie des kernel Disp departement NPDC ZST > 5 avec point gps
@@ -521,12 +570,13 @@ summary(CLC)
 #class(resSup5)
 resSup5_sf <- st_as_sf(resSup5)
 resSup5_sf <- st_transform(resSup5_sf,crs=2154)
+#Assemblage des couches habitats + et ZST
 hab <- st_intersection(CLC,resSup5_sf)
 hab$area <- st_area(hab)
 hab <- hab[,-c(4,5,10,12)]
 hab$proportion <- (hab$area/hab$area_DV)
 summary(hab)
-
+#st_write(hab, dsn = "hab", layer = "hab.shp", driver = "ESRI Shapefile", overwrite_layer = T)
 
 #Assemblage des couches habitats + points GPS HGD
 # liste unique de tes oiseaux
@@ -613,7 +663,7 @@ setDF(distri_loc_hab)
 ggdistrib <- ggplot(data = tab_hab,aes(x = nb, y = bird_id, fill = habitat))
 ggdistrib <- ggdistrib + geom_bar( colour = NA, stat="identity", position = "fill")
 ggdistrib <- ggdistrib + scale_fill_manual(values = vec_fill)
-ggdistrib <- ggdistrib + scale_y_discrete(breaks = c("habitat_DV", "habitat",tab_bird[,bird_id]),labels= c("habitat_DV", "habitat",tab_bird[,label]))
+#ggdistrib <- ggdistrib + scale_y_discrete(breaks = c("habitat_DV", "habitat",tab_bird[,bird_id]),labels= c("habitat_DV", "habitat",tab_bird[,label]))
 ggdistrib <- ggdistrib + labs(fill ="", y = "", x="")
 ggdistrib
 
@@ -686,8 +736,11 @@ ggdistrib2
 
 #importation de ma couche buffer de 100m autour de mes lignes cree a partir de qgis + modification de la projection
 BT <- st_read("SIG/Buffer_100m_ligne.shp")
-BT_sf <- st_as_sf(BT)
-BT_sf <- st_transform(BT_sf,crs=2154)
+BT_sf <- st_transform(BT,crs=2154)
+BT_sf <- st_union (BT_sf)
+BT_sf <- st_make_valid(BT_sf)
+#st_write(BT_sf, dsn = "BT_sf", layer = "BT_sf.shp", driver = "ESRI Shapefile", overwrite_layer = T)
+BT_sf <- st_as_sf(BT_sf)
 
 # modification de la projection de la couche habitat
 hab_sf <- st_as_sf(hab)
@@ -696,13 +749,39 @@ hab_sf <- st_transform(hab_sf,crs=2154)
 #Intersection entre la couche habitat et mes buffer de 100m
 BT_hab <- st_intersection(BT_sf,hab_sf)
 #st_write(BT_hab, dsn = "BT_hab", layer = "BT_hab.shp", driver = "ESRI Shapefile", overwrite_layer = T)
+BT_hab <- BT_hab[,-c(8,9,10)]
+
+# Calcul des aires par polygone dans les buffers de 100m
+BT_hab$area_poly <- st_area(BT_hab)
+
+
+# Somme des aires par habitat par ZST (group)
+area_hab <- aggregate(area_poly~BT_hab$habitat + BT_hab$group, BT_hab, sum)
+names(area_hab)[1] <- "habitat"
+names(area_hab)[2] <- "group"
+setDT(area_hab)
+
+# Aire totale des buffer de 100m dans les ZST
+area_group <- aggregate(area_poly~BT_hab$group, BT_hab, sum)
+names(area_group)[1] <- "group"
+names(area_group)[2] <- "area_buffer"
+setDT(area_group)
+
+#merge + calcul des proportions de chaque habitat des buffer dans les ZST
+BT_area <- merge(area_hab, area_group, by = "group")
+# Calcul des proportions d'habitat par buffer de 100m dans les ZST
+BT_area$proportion <- (BT_area$area_poly/BT_area$area_buffer)
+BT_prop_hab <- unique(BT_area[,c("group", "habitat", "proportion")])
 
 
 
+# representation graphique de la proportion des habitats sur un rayon de 100m autour des lignes basses tensions dans les ZST
+ggdistrib <- ggplot(data = BT_prop_hab,aes(x = proportion, y = group, fill = habitat))
+ggdistrib <- ggdistrib + geom_bar( colour = NA, stat="identity", position = "fill")
+ggdistrib <- ggdistrib + scale_fill_manual(values = vec_fill)
+ggdistrib <- ggdistrib + labs(fill ="Habitats", y = "", x="")
+ggdistrib
 
-
-
-
-
+ggsave("Rplot/BT_prop_hab.png",ggdistrib, width = 10, height = 7)
 
 
