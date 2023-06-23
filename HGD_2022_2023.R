@@ -277,7 +277,7 @@ library(dplyr)
 library(tidyverse)
 library(data.table)
 library(ggrepel)
-install.packages("scales")
+library(scales)
 
 #Creation DV kernel Disp all
 Disp_HGD_sf <- st_as_sf(HGD_Disp, coords = c("Longitude","Latitude"))
@@ -487,7 +487,8 @@ resSup5_sf <- read_sf("resSup5/resSup5.shp")
 rename_ZST <- read.csv("Rename_ZST.csv", head = T, sep = ";", stringsAsFactors = T)
 resSup5_sf <- merge(resSup5_sf, rename_ZST, by = "group")
 resSup5_sf <- resSup5_sf %>% relocate(rename, .after = group)
-
+resSup5_sf <- resSup5_sf[,-c(1)]
+names(resSup5_sf)[1] <- "group"
 
 #recapitulatif des ZST officiel
 resSup5_summary<- setDT(res)
@@ -495,6 +496,10 @@ resSup5_summary <- resSup5_summary[,.(first = min(date),last = max(date)), by =.
 resSup5_summary <- merge(resSup5_summary, resSup5, by = "group")
 resSup5_summary <- resSup5_summary %>% relocate(bird_id, .after = group)
 resSup5_summary <- resSup5_summary %>% relocate(group, .after = bird_id)
+resSup5_summary <- merge(resSup5_summary, rename_ZST, by = "group")
+resSup5_summary <- resSup5_summary %>% relocate(rename, .after = group)
+resSup5_summary <- resSup5_summary[,-c(1)]
+names(resSup5_summary)[1] <- "group"
 #st_write(resSup5_summary, dsn = "resSup5_summary", layer = "resSup5_summary.csv", driver = "CSV", overwrite_layer = T)
 
 
@@ -754,7 +759,6 @@ BT_hab <- BT_hab[,-c(8,9,10)]
 # Calcul des aires par polygone dans les buffers de 100m
 BT_hab$area_poly <- st_area(BT_hab)
 
-
 # Somme des aires par habitat par ZST (group)
 area_hab <- aggregate(area_poly~BT_hab$habitat + BT_hab$group, BT_hab, sum)
 names(area_hab)[1] <- "habitat"
@@ -772,7 +776,9 @@ BT_area <- merge(area_hab, area_group, by = "group")
 # Calcul des proportions d'habitat par buffer de 100m dans les ZST
 BT_area$proportion <- (BT_area$area_poly/BT_area$area_buffer)
 BT_prop_hab <- unique(BT_area[,c("group", "habitat", "proportion")])
-
+BT_prop_hab$proportion <- as.numeric(BT_prop_hab$proportion)
+BT_prop_hab$pourcentage <- percent(BT_prop_hab$proportion, accuracy = 1)
+BT_prop_hab <- subset(BT_prop_hab, BT_prop_hab$pourcentage!= "0%")
 
 
 # representation graphique de la proportion des habitats sur un rayon de 100m autour des lignes basses tensions dans les ZST
@@ -780,8 +786,12 @@ ggdistrib <- ggplot(data = BT_prop_hab,aes(x = proportion, y = group, fill = hab
 ggdistrib <- ggdistrib + geom_bar( colour = NA, stat="identity", position = "fill")
 ggdistrib <- ggdistrib + scale_fill_manual(values = vec_fill)
 ggdistrib <- ggdistrib + labs(fill ="Habitats", y = "", x="")
+ggdistrib <- ggdistrib + geom_text(data = BT_prop_hab, aes(label = pourcentage), size=4, position = position_stack(vjust = 0.5))
 ggdistrib
+ggsave("Rplot/BT_prop_hab.png",ggdistrib, width = 15, height = 7)
 
-ggsave("Rplot/BT_prop_hab.png",ggdistrib, width = 10, height = 7)
+
+
+
 
 
