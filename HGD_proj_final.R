@@ -110,7 +110,7 @@ nb_data_HH[,nb_data_HH := as.numeric(nb_data_HH)]
 # figure nombre de donnees par heure par oiseaux sur l'ensemble de la periode jusqu'au 15 janvier
 library(ggplot2)
 gg <- ggplot(nb_data_HH,aes(x=nb_data_HH,y=bird_id)) + geom_violin()
-gg <- gg + labs(y = "Bird_id", x = "Nombre de données par heure")
+gg <- gg + labs(y = "Oiseaux", x = "Nombre de données par heure")
 gg
 #ggsave("Rplot/nb_data_HH.png",gg)
 
@@ -215,7 +215,7 @@ nb_data_disp <- HGD_Disp[,.(nb = .N),by=bird_id]
 #fwrite(HGD_Disp, "table/HGD_Disp.csv")
 
 
-### Estimation des DV en dispersion (Kernel : LSCV) ############################################################################################################
+
 library(adehabitatHR)
 library(sf)
 library(ggplot2)
@@ -226,6 +226,7 @@ library(data.table)
 library(ggrepel)
 library(scales)
 
+#Importation des donnees cartographiques paysage
 # Fond de carte departement Nord Pas-de-Calais
 NPDC <- st_read("SIG/Departement NPDC.shp")
 NPDC <- st_make_valid(NPDC)
@@ -259,10 +260,44 @@ table(Trame_verte$SOUSTRAME)
 Trame_verte_sf <- st_transform(Trame_verte,crs=2154)
 Trame_verte_sf <- st_union (Trame_verte_sf)
 Trame_verte_sf <- st_make_valid(Trame_verte_sf)
-#st_write(Trame_verte_sf, dsn = "Trame_verte_sf", layer = "Trame_verte_sf.shp", driver = "ESRI Shapefile", overwrite_layer = T)
 Trame_verte_sf <- st_as_sf(Trame_verte_sf)
 
 
+# Ligne electrique basse tension Enedis
+LBT_Enedis <- st_read("SIG/LBT_Enedis.shp")
+
+# Ligne electrique basse tension Enedis a risque
+LBT_Enedis_risque <- st_read("SIG/LBT_Enedis_risque.shp")
+
+
+
+# Cartographie generale #####################################################################################################################
+# Repartition geographique des points gps NPDC avec BM + TV
+gg <- ggplot()  + theme_bw()
+gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
+gg <- gg + geom_sf(data = Bassin_minier, fill = "#bd9b95", color= NA,alpha=.5) + labs(fill = "Bassin minier")
+gg <- gg + geom_sf(data = Trame_verte_sf, fill = "#41cc76", color= NA,alpha= 0.5)
+gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.5)
+gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",colour="Oiseaux",title="Répartition géographique des localisations GPS dans le Nord et le Pas-de-Calais")
+gg
+ggsave("Rplot/Carto/loc_bird_trame.png",gg, width = 20, height = 11)
+
+# Repartition geographique des points gps NPDC avec LBT
+gg <- ggplot()  + theme_bw()
+gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
+gg <- gg + geom_sf(data = LBT_Enedis, fill = "#1e63e3", color= "#1e63e3",alpha=.5) 
+gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.5)
+gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",colour="Oiseaux",title="Répartition géographique des localisations GPS dans le Nord et le Pas-de-Calais")
+gg
+ggsave("Rplot/Carto/LBT.png",gg, width = 20, height = 11)
+
+
+
+### Estimation des DV en dispersion (Kernel : LSCV) ############################################################################################################
 #Creation DV kernel Disp all
 Disp_HGD_sf <- st_as_sf(HGD_Disp, coords = c("Longitude","Latitude"))
 st_crs(Disp_HGD_sf) <- 4326
@@ -313,7 +348,7 @@ df_30_Disp_all$bird_id <- df_30_Disp_all$id
 
 
 
-#### Cartographie ###########################################################################################################################
+#### Cartographie DV ###########################################################################################################################
 
 #Vu generale des kernel Disp departement NPDC 95%, 50%, 30%
 gg <- ggplot()  + theme_bw()
@@ -324,7 +359,7 @@ gg <- gg +   geom_polygon(data = df_30_Disp_all, aes(x = long, y = lat, color = 
 gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) 
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Birds",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95%, 50% et 30%)")
+gg <- gg + labs(x="",y="",colour="Oiseaux",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95%, 50% et 30%)")
 gg
 ggsave("Rplot/Kernel/kernel_NPDC_LSCV.png",gg, width = 25, height = 13)
 
@@ -335,7 +370,7 @@ gg <- gg +   geom_polygon(data = df_95_Disp_all, aes(x = long, y = lat, color = 
 gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) 
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Birds",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95%)")
+gg <- gg + labs(x="",y="",colour="Oiseaux",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95%)")
 gg
 ggsave("Rplot/Kernel/kernel_NPDC_LSCV_95.png",gg, width = 20, height = 11)
 
@@ -346,7 +381,7 @@ gg <- gg +   geom_polygon(data = df_95_Disp_all, aes(x = long, y = lat, color = 
 #gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) 
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Birds",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95%)")
+gg <- gg + labs(x="",y="",colour="Oiseaux",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95%)")
 gg
 ggsave("Rplot/Kernel/kernel_NPDC_LSCV_95_simple.png",gg, width = 20, height = 11)
 
@@ -359,7 +394,7 @@ gg <- gg +   geom_polygon(data = df_30_Disp_all, aes(x = long, y = lat, color = 
 gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) 
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Birds",title="Domaines vitaux des HGD en dispersion en région Hauts-de-France (Kernel 95%, 50% et 30%)")
+gg <- gg + labs(x="",y="",colour="Oiseaux",title="Domaines vitaux des HGD en dispersion en région Hauts-de-France (Kernel 95%, 50% et 30%)")
 #gg <- gg + scale_fill_manual(values=vec_colour)
 gg
 ggsave("Rplot/Kernel/kernel_HDF_LSCV.png",gg, width = 25, height = 13)
@@ -374,7 +409,7 @@ gg <- gg +   geom_polygon(data = df_30_Disp_all, aes(x = long, y = lat, color = 
 gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8)
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Birds",title="Domaines vitaux par HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95%, 50% et 30%)")
+gg <- gg + labs(x="",y="",colour="Oiseaux",title="Domaines vitaux par HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95%, 50% et 30%)")
 #gg <- gg + scale_fill_manual(values=vec_colour)
 gg
 ggsave("Rplot/Kernel/kernel_NPDC_bird_LSCV.png",gg, width = 25, height = 13)
@@ -590,7 +625,7 @@ ggsave("Rplot/nb_jour_ZST.png",resSup5, width = 10, height = 5)
 
 
 
-##### Cartographie ###########################################################################################################################
+# Cartographie ZST ###########################################################################################################################
 
 #Fond de carte global
 gg <- ggplot()  + theme_bw()
@@ -608,7 +643,7 @@ gg <- gg +   geom_sf(data = resSup5_sf, aes(color = bird_id, group = group),line
 gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8)
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Birds",title="ZST des HGD en dispersion dans les départements du Nord et du Pas-de-Calais issus des domaines vitaux (Kernel 95%)")
+gg <- gg + labs(x="",y="",colour="Oiseaux",title="ZST des HGD en dispersion dans les départements du Nord et du Pas-de-Calais issus des domaines vitaux (Kernel 95%)")
 gg <- gg + geom_label_repel(data = resSup5_sf, aes(label = group, geometry = geometry), stat = "sf_coordinates", min.segment.length = 0,colour = "black",segment.colour = "black") 
 gg
 ggsave("Rplot/Kernel/kernel_NPDC_LSCV_sup5_paysage_loc.png",gg, width = 20, height = 11)
@@ -621,7 +656,7 @@ gg <- gg +   geom_sf(data = resSup5_sf, aes(color = bird_id, group = group),line
 gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8)
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Birds",title="ZST des HGD en dispersion dans les départements du Nord et du Pas-de-Calais issus des domaines vitaux (Kernel 95%)")
+gg <- gg + labs(x="",y="",colour="Oiseaux",title="ZST des HGD en dispersion dans les départements du Nord et du Pas-de-Calais issus des domaines vitaux (Kernel 95%)")
 gg
 ggsave("Rplot/Kernel/kernel_NPDC_LSCV_sup5_complete.png",gg, width = 25, height = 13)
 
@@ -634,7 +669,7 @@ gg <- gg +   geom_sf(data = resSup5_sf, aes(color = bird_id, group = group),line
 #gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8)
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Birds",title="ZST des HGD en dispersion dans les départements du Nord et du Pas-de-Calais issus des domaines vitaux (Kernel 95%)")
+gg <- gg + labs(x="",y="",colour="Oiseaux",title="ZST des HGD en dispersion dans les départements du Nord et du Pas-de-Calais issus des domaines vitaux (Kernel 95%)")
 gg <- gg + geom_label_repel(data = resSup5_sf, aes(label = group, geometry = geometry), stat = "sf_coordinates", min.segment.length = 0,colour = "black",segment.colour = "black")
 gg
 ggsave("Rplot/Kernel/kernel_NPDC_bird_LSCV_sup5.png",gg, width = 25, height = 13)
@@ -647,7 +682,7 @@ gg <- gg +   geom_sf(data = resSup5_sf, aes(color = bird_id, group = group),line
 #gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) 
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-#gg <- gg + labs(x="",y="",colour="Birds",title="Domaines vitaux des HGD en dispersion en région Hauts-de-France (Kernel 95%, 50% et 30%)")
+#gg <- gg + labs(x="",y="",colour="Oiseaux",title="Domaines vitaux des HGD en dispersion en région Hauts-de-France (Kernel 95%, 50% et 30%)")
 gg
 ggsave("Rplot/Kernel/kernel_HDF_LSCV_sup5.png",gg, width = 25, height = 13)
 
@@ -672,7 +707,7 @@ gg <- gg +   geom_polygon(data = df_95_Disp_href, aes(x = long, y = lat, color =
 #gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) 
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Birds",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95% href)")
+gg <- gg + labs(x="",y="",colour="Oiseaux",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95% href)")
 gg
 ggsave("Rplot/Kernel/kernel_NPDC_href95.png",gg, width = 20, height = 11)
 
@@ -683,7 +718,7 @@ gg <- gg +   geom_polygon(data = df_95_Disp_href, aes(x = long, y = lat, color =
 gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) 
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Birds",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95% href)")
+gg <- gg + labs(x="",y="",colour="Oiseaux",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95% href)")
 gg
 ggsave("Rplot/Kernel/kernel_NPDC_href95_complet.png",gg, width = 20, height = 11)
 
@@ -940,4 +975,22 @@ area_hab_tot = group_by(area_hab_tot) %>%
 area_hab_tot$proportion <- (area_hab_tot$area_poly/area_hab_tot$tot_area)
 area_hab_tot$proportion <- as.numeric(area_hab_tot$proportion)
 area_hab_tot$pourcentage <- percent(area_hab_tot$proportion, accuracy = 1)
+
+
+##### Cartographie DV + LBT #############################################################################################################################
+
+#Cartographie des kernel Disp departement NPDC ZST > 5 sans les point gps mais avec étiquette
+gg <- ggplot()  + theme_bw()
+gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
+gg <- gg + geom_sf(data = LBT_Enedis, fill = "#1e63e3", color= "#1e63e3",alpha=.5)
+gg <- gg + geom_sf(data = LBT_Enedis_risque, fill = "#f50000", color= "#f50000",alpha=.5)
+gg <- gg +   geom_sf(data = resSup5_sf, aes(color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+#gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8)
+gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",colour="Oiseaux",title="Zone à sécuriser en priorité")
+#gg <- gg + geom_label_repel(data = resSup5_sf, aes(label = group, geometry = geometry), stat = "sf_coordinates", min.segment.length = 0,colour = "black",segment.colour = "black") 
+gg
+ggsave("Rplot/Carto/zone_a_risque.png",gg, width = 20, height = 11)
+
 
