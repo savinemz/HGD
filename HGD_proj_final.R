@@ -226,6 +226,43 @@ library(data.table)
 library(ggrepel)
 library(scales)
 
+# Fond de carte departement Nord Pas-de-Calais
+NPDC <- st_read("SIG/Departement NPDC.shp")
+NPDC <- st_make_valid(NPDC)
+NPDC <- st_transform(NPDC,crs=2154)
+NPDC <- st_make_valid(NPDC)
+
+# Fond de carte departement region Hauts-de-France
+HDF <- st_read("SIG/Departement HDF.shp")
+HDF <- st_make_valid(HDF)
+HDF <- st_transform(HDF,crs=2154)
+HDF <- st_make_valid(HDF)
+
+# Delimitation bassin minier
+Bassin_minier <- st_read("SIG/Limites bassin miniers fusionnées.shp")
+Bassin_minier <- Bassin_minier[,-c(1:11)]
+Bassin_minier$habitat = "bassin_minier"
+
+# Trame verte region nord et pas de calais
+Trame_verte <- st_read("SIG/RB_SRCE_TVB.shp")
+table(Trame_verte$SOUSTRAME)
+Trame_verte <- subset(Trame_verte, SOUSTRAME != "coteaux calcaires")
+Trame_verte <- subset(Trame_verte, SOUSTRAME != "dunes et estrans sableux")
+Trame_verte <- subset(Trame_verte, SOUSTRAME != "estuaires")
+Trame_verte <- subset(Trame_verte, SOUSTRAME != "falaises et estrans rocheux")
+Trame_verte <- subset(Trame_verte, SOUSTRAME != "terrils et autres milieux anthropiques")
+Trame_verte <- subset(Trame_verte, SOUSTRAME != "zones humides")
+Trame_verte <- subset(Trame_verte, SOUSTRAME != "landes et pelouses acidiphiles")
+Trame_verte <- subset(Trame_verte, SOUSTRAME != "autres milieux")
+table(Trame_verte$SOUSTRAME)
+
+Trame_verte_sf <- st_transform(Trame_verte,crs=2154)
+Trame_verte_sf <- st_union (Trame_verte_sf)
+Trame_verte_sf <- st_make_valid(Trame_verte_sf)
+#st_write(Trame_verte_sf, dsn = "Trame_verte_sf", layer = "Trame_verte_sf.shp", driver = "ESRI Shapefile", overwrite_layer = T)
+Trame_verte_sf <- st_as_sf(Trame_verte_sf)
+
+
 #Creation DV kernel Disp all
 Disp_HGD_sf <- st_as_sf(HGD_Disp, coords = c("Longitude","Latitude"))
 st_crs(Disp_HGD_sf) <- 4326
@@ -273,20 +310,10 @@ sdf_poly_30_Disp_all <- Reduce(rbind, ud_30_Disp_all)
 df_30_Disp_all <- fortify(sdf_poly_30_Disp_all)
 df_30_Disp_all$bird_id <- df_30_Disp_all$id
 
+
+
+
 #### Cartographie ###########################################################################################################################
-
-# Fond de carte departement Nord Pas-de-Calais
-NPDC <- st_read("SIG/Departement NPDC.shp")
-NPDC <- st_make_valid(NPDC)
-NPDC <- st_transform(NPDC,crs=2154)
-NPDC <- st_make_valid(NPDC)
-
-# Fond de carte departement region Hauts-de-France
-HDF <- st_read("SIG/Departement HDF.shp")
-HDF <- st_make_valid(HDF)
-HDF <- st_transform(HDF,crs=2154)
-HDF <- st_make_valid(HDF)
-
 
 #Vu generale des kernel Disp departement NPDC 95%, 50%, 30%
 gg <- ggplot()  + theme_bw()
@@ -554,39 +581,6 @@ nb <- nb_data_datetest5 [,.(nb_data = .N), by = .(bird_id, group)]
 # excursion frequente et longue en dehors de la zone = souvent lie a un phenomene de balancier quand les ZST sont tres rapprochees.
 
 
-
-
-#Test Kernel parametre de lissage
-Disp_HGD_sf <- st_as_sf(HGD_Disp, coords = c("Longitude","Latitude"))
-st_crs(Disp_HGD_sf) <- 4326
-Disp_HGD_sf <- st_transform(Disp_HGD_sf,crs=2154)
-Disp_sf_NPDC <- Disp_HGD_sf[,c("bird_id")]
-Disp_sf_NPDC <- st_crop(Disp_sf_NPDC,st_bbox(NPDC))
-Disp_sf_NPDC$bird_id <- as.character(Disp_sf_NPDC$bird_id)
-Disp_sf_NPDC_k <- as(Disp_sf_NPDC,'Spatial')
-
-kdh_Disp_l <- kernelUD(Disp_sf_NPDC_k, h="LSCV", grid = 1000)
-#image(kdh_Disp_l)
-
-# creating SpatialPolygonsDataFrame
-# Polygone spatial 95%
-kd_names_Disp_l <- names(kdh_Disp_l)
-ud_95_Disp_l <- lapply(kdh_Disp_l, function(x) try(getverticeshr(x, 95)))
-
-
-sapply(1:length(ud_95_Disp_l), function(i) {
-  row.names(ud_95_Disp_l[[i]]) <<- kd_names_Disp_l[i]
-})
-sdf_poly_95_Disp_l <- Reduce(rbind, ud_95_Disp_l)
-df_95_Disp_l <- fortify(sdf_poly_95_Disp_l)
-df_95_Disp_l$bird_id <- df_95_Disp_l$id
-
-#Creation de centroides
-resSup5_sf <- st_as_sf(resSup5)
-resSup5_sf <- st_transform(resSup5_sf,crs=2154)
-centro <- st_centroid(resSup5)
-
-
 #Graphique: duree de sejour moyen dans les ZST
 boxplot(resSup5$nb_jour)
 boxplot(resSup5$nb_jour~resSup5$bird_id, ylab="Nombre de jour" , xlab="Bird")
@@ -598,17 +592,26 @@ ggsave("Rplot/nb_jour_ZST.png",resSup5, width = 10, height = 5)
 
 ##### Cartographie ###########################################################################################################################
 
+#Fond de carte global
+gg <- ggplot()  + theme_bw()
+gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
+gg <- gg + geom_sf(data = Bassin_minier, fill = "#bd9b95", color= NA,alpha=.5)
+gg <- gg + geom_sf(data = Trame_verte, fill = "#41cc76", color= NA,alpha= 0.5)
+gg
+
 #Cartographie des kernel Disp departement NPDC ZST > 5 sans les point gps mais avec étiquette
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
+gg <- gg + geom_sf(data = Bassin_minier, fill = "#bd9b95", color= NA,alpha=.5)
+gg <- gg + geom_sf(data = Trame_verte, fill = "#41cc76", color= NA,alpha= 0.5)
 gg <- gg +   geom_sf(data = resSup5_sf, aes(color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-#gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8)
+gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8)
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="Birds",title="ZST des HGD en dispersion dans les départements du Nord et du Pas-de-Calais issus des domaines vitaux (Kernel 95%)")
 gg <- gg + geom_label_repel(data = resSup5_sf, aes(label = group, geometry = geometry), stat = "sf_coordinates", min.segment.length = 0,colour = "black",segment.colour = "black") 
 gg
-ggsave("Rplot/Kernel/kernel_NPDC_LSCV_sup5_etiquette.png",gg, width = 20, height = 11)
+ggsave("Rplot/Kernel/kernel_NPDC_LSCV_sup5_paysage_loc.png",gg, width = 20, height = 11)
 
 
 #Cartographie des kernel Disp departement NPDC ZST > 5 avec point gps
@@ -649,7 +652,46 @@ gg
 ggsave("Rplot/Kernel/kernel_HDF_LSCV_sup5.png",gg, width = 25, height = 13)
 
 
-#### Selection des habitats selon le jour ou la nuit ################################################################################################
+### Test Kernel h = href ####################################################################################
+kdh_Disp_href <- kernelUD(Disp_sf_NPDC_k, h="href", grid = 1000)
+kd_names_Disp_href <- names(kdh_Disp_href)
+ud_95_Disp_href <- lapply(kdh_Disp_href, function(x) try(getverticeshr(x, 95)))
+
+
+sapply(1:length(ud_95_Disp_href), function(i) {
+  row.names(ud_95_Disp_href[[i]]) <<- kd_names_Disp_href[i]
+})
+sdf_poly_95_Disp_href <- Reduce(rbind, ud_95_Disp_href)
+df_95_Disp_href <- fortify(sdf_poly_95_Disp_href)
+df_95_Disp_href$bird_id <- df_95_Disp_href$id
+
+#Vu generale des kernel Disp departement NPDC 95% h = href sans loc GPS
+gg <- ggplot()  + theme_bw()
+gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
+gg <- gg +   geom_polygon(data = df_95_Disp_href, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+#gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) 
+gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",colour="Birds",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95% href)")
+gg
+ggsave("Rplot/Kernel/kernel_NPDC_href95.png",gg, width = 20, height = 11)
+
+#Vu generale des kernel Disp departement NPDC 95% h = href avec loc GPS
+gg <- ggplot()  + theme_bw()
+gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
+gg <- gg +   geom_polygon(data = df_95_Disp_href, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) 
+gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",colour="Birds",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95% href)")
+gg
+ggsave("Rplot/Kernel/kernel_NPDC_href95_complet.png",gg, width = 20, height = 11)
+
+
+
+
+
+#### Selection des habitats J/N ################################################################################################
 ### Data Habitat ##################################################################################################################################
 
 #calculs des surfaces par polygones
@@ -739,7 +781,6 @@ area_habitat[,nb := as.numeric(proportion)]
 
 setcolorder(area_habitat,c("bird_id","habitat","nb"))
 tab_hab <- bind_rows(tab_hab, area_habitat)
-
 
 
 #couleur par habitat
