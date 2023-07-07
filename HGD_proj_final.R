@@ -275,14 +275,15 @@ LBT_Enedis_risque <- st_read("SIG/LBT_Enedis_risque.shp")
 # Repartition geographique des points gps NPDC avec BM + TV
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
-gg <- gg + geom_sf(data = Bassin_minier, fill = "#bd9b95", color= NA,alpha=.5) + labs(fill = "Bassin minier")
-gg <- gg + geom_sf(data = Trame_verte_sf, fill = "#41cc76", color= NA,alpha= 0.5)
+#gg <- gg + geom_sf(data = Bassin_minier, fill = "#bd9b95", color= NA,alpha=.5) + labs(fill = "Bassin minier")
+#gg <- gg + geom_sf(data = Trame_verte_sf, fill = "#41cc76", color= NA,alpha= 0.5)
 gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.5)
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Oiseaux",title="Répartition géographique des localisations GPS dans le Nord et le Pas-de-Calais")
+gg <- gg + labs(x="",y="",colour="Identifiant Grand-duc",title="Répartition géographique des localisations GPS dans le Nord et le Pas-de-Calais")
+gg <- gg + theme (legend.title = element_text(size = 15), legend.text = element_text(size = 13))
 gg
-ggsave("Rplot/Carto/loc_bird_trame.png",gg, width = 20, height = 11)
+ggsave("Rplot/Carto/loc_bird.png",gg, width = 20, height = 11)
 
 # Repartition geographique des points gps NPDC avec LBT
 gg <- ggplot()  + theme_bw()
@@ -291,7 +292,7 @@ gg <- gg + geom_sf(data = LBT_Enedis, fill = "#1e63e3", color= "#1e63e3",alpha=.
 gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.5)
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Oiseaux",title="Répartition géographique des localisations GPS dans le Nord et le Pas-de-Calais")
+gg <- gg + labs(x="",y="",colour="Identifiant Grand-duc",title="Répartition géographique des localisations GPS dans le Nord et le Pas-de-Calais")
 gg
 ggsave("Rplot/Carto/LBT.png",gg, width = 20, height = 11)
 
@@ -359,18 +360,18 @@ gg <- gg +   geom_polygon(data = df_30_Disp_all, aes(x = long, y = lat, color = 
 gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) 
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Oiseaux",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95%, 50% et 30%)")
+gg <- gg + labs(x="",y="",colour="Identifiant Grand-duc",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95%, 50% et 30%)")
 gg
 ggsave("Rplot/Kernel/kernel_NPDC_LSCV.png",gg, width = 25, height = 13)
 
 #Vu generale des kernel Disp departement NPDC 95%
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
-gg <- gg +   geom_polygon(data = df_95_Disp_all, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg +   geom_polygon(data = df_95_Disp_all, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1,fill=NA,alpha = 1)
 gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) 
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Oiseaux",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95%)")
+gg <- gg + labs(x="",y="",colour="Identifiant Grand-duc",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95%)")
 gg
 ggsave("Rplot/Kernel/kernel_NPDC_LSCV_95.png",gg, width = 20, height = 11)
 
@@ -381,7 +382,7 @@ gg <- gg +   geom_polygon(data = df_95_Disp_all, aes(x = long, y = lat, color = 
 #gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) 
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Oiseaux",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95%)")
+gg <- gg + labs(x="",y="",colour="Identifiant Grand-duc",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95%)")
 gg
 ggsave("Rplot/Kernel/kernel_NPDC_LSCV_95_simple.png",gg, width = 20, height = 11)
 
@@ -394,7 +395,7 @@ gg <- gg +   geom_polygon(data = df_30_Disp_all, aes(x = long, y = lat, color = 
 gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) 
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Oiseaux",title="Domaines vitaux des HGD en dispersion en région Hauts-de-France (Kernel 95%, 50% et 30%)")
+gg <- gg + labs(x="",y="",colour="Identifiant Grand-duc",title="Domaines vitaux des HGD en dispersion en région Hauts-de-France (Kernel 95%, 50% et 30%)")
 #gg <- gg + scale_fill_manual(values=vec_colour)
 gg
 ggsave("Rplot/Kernel/kernel_HDF_LSCV.png",gg, width = 25, height = 13)
@@ -409,10 +410,10 @@ gg <- gg +   geom_polygon(data = df_30_Disp_all, aes(x = long, y = lat, color = 
 gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8)
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Oiseaux",title="Domaines vitaux par HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95%, 50% et 30%)")
+gg <- gg + labs(x="",y="",colour="Identifiant Grand-duc",title="Domaines vitaux par HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95%)")
 #gg <- gg + scale_fill_manual(values=vec_colour)
 gg
-ggsave("Rplot/Kernel/kernel_NPDC_bird_LSCV.png",gg, width = 25, height = 13)
+ggsave("Rplot/Kernel/kernel_NPDC_bird_LSCV_95.png",gg, width = 25, height = 13)
 
 
 
@@ -635,31 +636,20 @@ gg <- gg + geom_sf(data = Trame_verte, fill = "#41cc76", color= NA,alpha= 0.5)
 gg
 
 #Cartographie des kernel Disp departement NPDC ZST > 5 sans les point gps mais avec étiquette
-gg <- ggplot()  + theme_bw()
+
+gg <- ggplot() + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
-gg <- gg + geom_sf(data = Bassin_minier, fill = "#bd9b95", color= NA,alpha=.5)
-gg <- gg + geom_sf(data = Trame_verte, fill = "#41cc76", color= NA,alpha= 0.5)
-gg <- gg +   geom_sf(data = resSup5_sf, aes(color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8)
+gg <- gg + geom_sf(data = Bassin_minier, aes(fill = "#BD9B95"), color= NA,alpha=.5)
+gg <- gg + geom_sf(data = Trame_verte_sf, aes(fill = "#41CC76"), color= NA,alpha= 0.5)
+gg <- gg + geom_sf(data = resSup5_sf, aes(color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.5)
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Oiseaux",title="ZST des HGD en dispersion dans les départements du Nord et du Pas-de-Calais issus des domaines vitaux (Kernel 95%)")
-gg <- gg + geom_label_repel(data = resSup5_sf, aes(label = group, geometry = geometry), stat = "sf_coordinates", min.segment.length = 0,colour = "black",segment.colour = "black") 
+gg <- gg + labs(x="",y="",colour="Identifiant Grand-duc",title="ZST des HGD en dispersion dans les départements du Nord et du Pas-de-Calais issus des domaines vitaux (Kernel 95%)")
+gg <- gg + geom_label_repel(data = resSup5_sf, aes(label = group, geometry = geometry), stat = "sf_coordinates", min.segment.length = 0,colour = "black",segment.colour = "black")
+#gg <- gg + scale_fill_manual("Paysage", values = c("#41CC76","#BD9B95"),labels = c("Trame Verte", "Bassin minier"))
 gg
-ggsave("Rplot/Kernel/kernel_NPDC_LSCV_sup5_paysage_loc.png",gg, width = 20, height = 11)
-
-
-#Cartographie des kernel Disp departement NPDC ZST > 5 avec point gps
-gg <- ggplot()  + theme_bw()
-gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
-gg <- gg +   geom_sf(data = resSup5_sf, aes(color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8)
-gg <- gg + annotation_scale()
-gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Oiseaux",title="ZST des HGD en dispersion dans les départements du Nord et du Pas-de-Calais issus des domaines vitaux (Kernel 95%)")
-gg
-ggsave("Rplot/Kernel/kernel_NPDC_LSCV_sup5_complete.png",gg, width = 25, height = 13)
-
+ggsave("Rplot/Kernel/kernel_NPDC_LSCV_sup5_ssetiquette.png",gg, width = 20, height = 11)
 
 
 #vu par HGD des ZST departement NPDC
@@ -669,10 +659,11 @@ gg <- gg +   geom_sf(data = resSup5_sf, aes(color = bird_id, group = group),line
 #gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8)
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Oiseaux",title="ZST des HGD en dispersion dans les départements du Nord et du Pas-de-Calais issus des domaines vitaux (Kernel 95%)")
+gg <- gg + labs(x="",y="",colour="Identifiant Grand-duc",title="ZST des HGD en dispersion dans les départements du Nord et du Pas-de-Calais issus des domaines vitaux (Kernel 95%)")
 gg <- gg + geom_label_repel(data = resSup5_sf, aes(label = group, geometry = geometry), stat = "sf_coordinates", min.segment.length = 0,colour = "black",segment.colour = "black")
 gg
 ggsave("Rplot/Kernel/kernel_NPDC_bird_LSCV_sup5.png",gg, width = 25, height = 13)
+
 
 
 #Vu generale des kernel Disp region HDF
@@ -682,9 +673,9 @@ gg <- gg +   geom_sf(data = resSup5_sf, aes(color = bird_id, group = group),line
 #gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) 
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-#gg <- gg + labs(x="",y="",colour="Oiseaux",title="Domaines vitaux des HGD en dispersion en région Hauts-de-France (Kernel 95%, 50% et 30%)")
+gg <- gg + labs(x="",y="",colour="Identifiant Grand-duc",title="ZST des HGD en dispersion dans les départements du Nord et du Pas-de-Calais issus des domaines vitaux (Kernel 95%)")
 gg
-ggsave("Rplot/Kernel/kernel_HDF_LSCV_sup5.png",gg, width = 25, height = 13)
+ggsave("Rplot/Kernel/kernel_HDF_LSCV_sup51.png",gg, width = 20, height = 11)
 
 
 ### Test Kernel h = href ####################################################################################
@@ -707,7 +698,7 @@ gg <- gg +   geom_polygon(data = df_95_Disp_href, aes(x = long, y = lat, color =
 #gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) 
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Oiseaux",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95% href)")
+gg <- gg + labs(x="",y="",colour="Identifiant Grand-duc",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95% href)")
 gg
 ggsave("Rplot/Kernel/kernel_NPDC_href95.png",gg, width = 20, height = 11)
 
@@ -718,7 +709,7 @@ gg <- gg +   geom_polygon(data = df_95_Disp_href, aes(x = long, y = lat, color =
 gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) 
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Oiseaux",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95% href)")
+gg <- gg + labs(x="",y="",colour="Identifiant Grand-duc",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95% href)")
 gg
 ggsave("Rplot/Kernel/kernel_NPDC_href95_complet.png",gg, width = 20, height = 11)
 
@@ -890,7 +881,6 @@ ggdistrib1
 
 ggsave("Rplot/ggdistribx.png",ggdistrib1, width = 10, height = 5)
 
-
 ggdistrib2 <- ggplot(data = tab_daynight,aes(x = nb, y = bird_id, fill = habitat))+facet_grid(.~day_night)
 ggdistrib2 <- ggdistrib2 + geom_bar( colour = NA, stat="identity", position = "fill")
 ggdistrib2 <- ggdistrib2 + scale_fill_manual(values = vec_fill)
@@ -920,7 +910,7 @@ hab_sf <- st_transform(hab_sf,crs=2154)
 
 #Intersection entre la couche habitat et mes buffer de 100m
 BT_hab <- st_intersection(BT_sf,hab_sf)
-st_write(BT_hab, dsn = "BT_hab", layer = "BT_hab.shp", driver = "ESRI Shapefile", overwrite_layer = T)
+#st_write(BT_hab, dsn = "BT_hab", layer = "BT_hab.shp", driver = "ESRI Shapefile", overwrite_layer = T)
 BT_hab <- BT_hab[,-c(8,9,10)]
 
 # Calcul des aires par polygone dans les buffers de 100m
@@ -955,7 +945,7 @@ ggdistrib <- ggdistrib + scale_fill_manual(values = vec_fill)
 ggdistrib <- ggdistrib + labs(fill ="Habitats", y = "", x="")
 ggdistrib <- ggdistrib + geom_text(data = BT_prop_hab, aes(label = pourcentage), size=4, position = position_stack(vjust = 0.5))
 ggdistrib
-ggsave("Rplot/BT_prop_hab.png",ggdistrib, width = 15, height = 7)
+ggsave("Rplot/BT_prop_hab1.png",ggdistrib, width = 10, height = 6)
 
 
 
@@ -982,15 +972,56 @@ area_hab_tot$pourcentage <- percent(area_hab_tot$proportion, accuracy = 1)
 #Cartographie des kernel Disp departement NPDC ZST > 5 sans les point gps mais avec étiquette
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
-gg <- gg + geom_sf(data = LBT_Enedis, fill = "#1e63e3", color= "#1e63e3",alpha=.5)
-gg <- gg + geom_sf(data = LBT_Enedis_risque, fill = "#f50000", color= "#f50000",alpha=.5)
-gg <- gg +   geom_sf(data = resSup5_sf, aes(color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-#gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8)
+gg <- gg + geom_sf(data = LBT_Enedis, aes(fill = "#1e63e3"), color= "#1e63e3",alpha=.5)
+gg <- gg + geom_sf(data = LBT_Enedis_risque, aes(fill = "#f50000"), color= "#f50000",alpha=.5)
+gg <- gg +   geom_sf(data = resSup5_sf, aes(fill = "#080808"), fill = NA, linewidth =1,alpha = 1)
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour="Oiseaux",title="Zone à sécuriser en priorité")
-#gg <- gg + geom_label_repel(data = resSup5_sf, aes(label = group, geometry = geometry), stat = "sf_coordinates", min.segment.length = 0,colour = "black",segment.colour = "black") 
+gg <- gg + labs(x="",y="",colour= "ZST Grand-duc" ,title="Zone à sécuriser en priorité")
+gg <- gg + scale_fill_manual("VDM", values = c("#080808"),labels = c("Zone à sécuriser en priorité"))
+gg <- gg + scale_fill_manual("PB électrocution", values = c("#1e63e3","#f50000"),labels = c("Ligne électrique Enedis", "Ligne électrique Enedis à risque"))
 gg
-ggsave("Rplot/Carto/zone_a_risque.png",gg, width = 20, height = 11)
+
+#le mieux que je sois arrivé à faire
+gg <- ggplot()  + theme_bw()
+gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
+gg <- gg + geom_sf(data = LBT_Enedis, aes(fill = "#1e63e3"), color= "#1e63e3",alpha=.5)
+gg <- gg + geom_sf(data = LBT_Enedis_risque, aes(fill = "#f50000"), color= "#f50000",alpha=1)
+gg <- gg +   geom_sf(data = resSup5_sf, aes(color = bird_id, group = group),linewidth =1,fill=NA,alpha = 1)
+gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",colour= "Identifiant Grand-duc" ,title="Zone à sécuriser en priorité")
+gg <- gg + scale_fill_manual("Pression de fragmentation", values = c("#1e63e3","#f50000"),labels = c("Ligne électrique Enedis", "Ligne électrique Enedis à risque"))
+gg
+ggsave("Rplot/Carto/zone_a_risque_LBT.png",gg, width = 20, height = 11)
+
+
+gg <- ggplot()  + theme_bw()
+gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
+gg <- gg + geom_sf(data = LBT_Enedis, aes(fill = "#1e63e3"), color= "#1e63e3",alpha=.5)
+gg <- gg + geom_sf(data = LBT_Enedis_risque, aes(fill = "#f50000"), color= "#f50000",alpha=1)
+gg <- gg + geom_sf(data = resSup5_sf, aes(fill = "#080808"),linewidth =1,fill=NA,alpha = 1)
+gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",colour= "Zone à sécuriser en priorité" ,title="Zone à sécuriser en priorité")
+gg <- gg + scale_fill_manual("Pression de fragmentation", values = c("#1e63e3","#f50000"),labels = c("Ligne électrique Enedis", "Ligne électrique Enedis à risque"))
+gg
+ggsave("Rplot/Carto/zone_a_risque_LBTm.png",gg, width = 20, height = 11)
+
+
+
+
+gg <- ggplot()  + theme_bw()
+gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
+gg <- gg + geom_sf(data = LBT_Enedis, aes(fill = "#1e63e3"), color= "#1e63e3",alpha=.5)
+gg <- gg + geom_sf(data = LBT_Enedis_risque, aes(fill = "#f50000"), color= "#f50000",alpha=1)
+gg <- gg + geom_sf(data = resSup5_sf, aes(fill = "#080808"), color = "#080808",linewidth =1,fill=NA,alpha = 1)
+gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",colour= "Zone à sécuriser en priorité" ,title="Zone à sécuriser en priorité")
+gg <- gg + scale_fill_manual("Pression de fragmentation", values = c("#1e63e3","#f50000", "#080808"),labels = c("Ligne électrique Enedis", "Ligne électrique Enedis à risque", "Zone à sécuriser en priorité"))
+gg
+ggsave("Rplot/Carto/zone_a_risque_LBTm.png",gg, width = 20, height = 11)
+
 
 
