@@ -272,6 +272,10 @@ LBT_Enedis <- st_read("SIG/LBT_Enedis.shp")
 LBT_Enedis_risque <- st_read("SIG/LBT_Enedis_risque.shp")
 LBT_Enedis_risque <- st_read("SIG/Ligne_BT_buf_ZST.shp")
 
+#Aire de nidification 2022 sans Glageon
+aire_2022 <- st_read("SIG/aire_2022_complet.shp")
+aire_2022 <- st_transform(aire_2022,crs=2154)
+aire_2022_sf <- st_make_valid(aire_2022)
 
 
 # Cartographie generale #####################################################################################################################
@@ -281,12 +285,21 @@ gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
 #gg <- gg + geom_sf(data = Bassin_minier, fill = "#bd9b95", color= NA,alpha=.5) + labs(fill = "Bassin minier")
 #gg <- gg + geom_sf(data = Trame_verte_sf, fill = "#41cc76", color= NA,alpha= 0.5)
 gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.5)
+gg <- gg + geom_sf(data = aire_2022_sf,aes(colour= bird_id), shape = 2, size = 5, fill = "white", alpha = 1)
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="Identifiant Grand-duc",title="Répartition géographique des localisations GPS dans le Nord et le Pas-de-Calais")
 gg <- gg + theme (legend.title = element_text(size = 15), legend.text = element_text(size = 13))
 gg
-ggsave("Rplot/Carto/loc_bird.png",gg, width = 20, height = 11)
+ggsave("Rplot/Carto/loc_birdtest.png",gg, width = 20, height = 11)
+
+
+
+gg <- ggplot()  + theme_bw()
+gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
+gg <- gg + geom_sf(data = aire_2022_sf,aes(colour= bird_id), shape = 7, size = 3, alpha = 1)
+gg
+
 
 # Repartition geographique des points gps NPDC avec LBT
 gg <- ggplot()  + theme_bw()
@@ -371,12 +384,13 @@ ggsave("Rplot/Kernel/kernel_NPDC_LSCV.png",gg, width = 25, height = 13)
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
 gg <- gg +   geom_polygon(data = df_95_Disp_all, aes(x = long, y = lat, color = bird_id, group = group),linewidth =1,fill=NA,alpha = 1)
-gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) 
+#gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.8) 
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="Identifiant Grand-duc",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95%)")
+gg <- gg + theme (legend.title = element_text(size = 15), legend.text = element_text(size = 13))
 gg
-ggsave("Rplot/Kernel/kernel_NPDC_LSCV_95.png",gg, width = 20, height = 11)
+ggsave("Rplot/Kernel/kernel_NPDC_LSCV_95t.png",gg, width = 20, height = 11)
 
 #Vu generale des kernel Disp departement NPDC 95% sans les pôints GPS
 gg <- ggplot()  + theme_bw()
@@ -663,8 +677,8 @@ gg <- ggplot() + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
 gg <- gg + geom_sf(data = Bassin_minier, aes(fill = "#BD9B95"), color= NA,alpha=.5)
 gg <- gg + geom_sf(data = Trame_verte_sf, aes(fill = "#41CC76"), color= NA,alpha= 0.5)
-#gg <- gg + geom_sf(data = resSup5_sf, aes(color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
-gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.5)
+gg <- gg + geom_sf(data = resSup5_sf, aes(color = bird_id, group = group),linewidth =1.2,fill=NA,alpha = 1)
+#gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.5)
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="Identifiant Grand-duc",title="Répartition géographique des localisations GPS dans le Nord et le Pas-de-Calais")
@@ -722,6 +736,7 @@ gg <- gg +   geom_polygon(data = df_95_Disp_href, aes(x = long, y = lat, color =
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="Identifiant Grand-duc",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95% href)")
+gg <- gg + theme (legend.title = element_text(size = 15), legend.text = element_text(size = 13))
 gg
 ggsave("Rplot/Kernel/kernel_NPDC_href95.png",gg, width = 20, height = 11)
 
@@ -735,6 +750,63 @@ gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), wid
 gg <- gg + labs(x="",y="",colour="Identifiant Grand-duc",title="Domaines vitaux des HGD en dispersion dans les départements du Nord et du Pas-de-Calais (Kernel 95% href)")
 gg
 ggsave("Rplot/Kernel/kernel_NPDC_href95_complet.png",gg, width = 20, height = 11)
+
+
+
+#### ZST (DV 50%) ######################################################################################################################
+#Creation des DV kernel ZST
+Disp_HGD_sf <- st_as_sf(HGD_Disp, coords = c("Longitude","Latitude"))
+st_crs(Disp_HGD_sf) <- 4326
+Disp_HGD_sf <- st_transform(Disp_HGD_sf,crs=2154)
+Disp_sf_NPDC <- Disp_HGD_sf[,c("bird_id")]
+Disp_sf_NPDC <- st_crop(Disp_sf_NPDC,st_bbox(NPDC))
+Disp_sf_NPDC$bird_id <- as.character(Disp_sf_NPDC$bird_id)
+Disp_sf_NPDC_k <- as(Disp_sf_NPDC,'Spatial')
+
+kdh_Disp_l <- kernelUD(Disp_sf_NPDC_k, h="LSCV", grid = 1000)
+#image(kdh_Disp_l)
+
+# creating SpatialPolygonsDataFrame
+# Polygone spatial 95%
+kd_names_Disp_l <- names(kdh_Disp_l)
+ud_50_Disp_l <- lapply(kdh_Disp_l, function(x) try(getverticeshr(x, 50)))
+
+
+sapply(1:length(ud_50_Disp_l), function(i) {
+  row.names(ud_50_Disp_l[[i]]) <<- kd_names_Disp_l[i]
+})
+sdf_poly_50_Disp_l <- Reduce(rbind, ud_50_Disp_l)
+df_50_Disp_l <- fortify(sdf_poly_50_Disp_l)
+df_50_Disp_l$bird_id <- df_50_Disp_l$id
+
+
+sdf_poly_50_Disp_l <- Reduce(rbind, ud_50_Disp_l)
+sf_poly_50_Disp_l <- st_as_sf(sdf_poly_50_Disp_l)
+sf_poly_50_Disp_l_DV <- st_cast(sf_poly_50_Disp_l, "MULTIPOLYGON") %>% st_cast("POLYGON")#transforme les listes emboitees
+
+
+
+sf_poly_50_Disp_l_DV <- sf_poly_50_Disp_l_DV %>% 
+  rownames_to_column(var="group")
+sf_poly_50_Disp_l_DV$area_DV <- st_area(sf_poly_50_Disp_l_DV)
+
+#st_write(sf_poly_50_Disp_l_DV, dsn = "sf_poly_50_Disp_l_DV", layer = "sf_poly_50_Disp_l_DV", driver = "CSV", overwrite_layer = T)
+#complété le fichier csv avec une colonne oiseaux (remplir à la main)
+
+DV_Disp50 <- read.csv("C:/Git/HGD/sf_poly_50_Disp_l_DV/sf_poly_50_Disp_l_DV.csv", head = T, sep = ";", stringsAsFactors = T)
+DV_Disp50 <- DV_Disp50[,-c(2,3,4)]
+DV_Disp50 <- merge(DV_Disp50, sf_poly_50_Disp_l_DV, by = "group")
+DV_Disp50 <- DV_Disp50[,-c(3,4)]
+DV_Disp50 <- DV_Disp50 %>% relocate(group, .after = bird_id)
+
+#Sauvegarde des DV globaux
+#st_write(DV_Disp50, dsn = "DV_Disp50", layer = "DV_Disp50.shp", driver = "ESRI Shapefile", overwrite_layer = T)
+DV_Disp50 <- st_as_sf(DV_Disp50)
+DV_Disp50 <- st_transform(DV_Disp50,crs=2154)
+#st_crs(DV_Disp)
+
+
+
 
 
 
@@ -897,7 +969,7 @@ tab_bird_dn[,label := paste0(bird_id," (",Jour," , ",Nuit,")")]
 # representation graphique de la distribution des localisations par habitat et par habitat des motus occupes en fonction J/N
 ggdistrib1 <- ggplot(data = tab_daynight,aes(x = nb, y = bird_id, fill = habitat))+facet_grid(.~day_night)
 ggdistrib1 <- ggdistrib1 + geom_bar( colour = NA, stat="identity", position = "fill")
-ggdistrib1 <- ggdistrib1 + scale_fill_manual(values = vec_fill)
+ggdistrib1 <- ggdistrib1 + scale_fill_manual(values = vec_fill, labels = c("Cultures arables", "Forêts de conifères", "Forêts de feuillus", "Prairies", "Zones urbaines"))
 #ggdistrib <- ggdistrib1 + scale_y_discrete(breaks = c("habitat_DV", "habitat",tab_bird_dn[,bird_id]),labels= c("habitat_DV", "habitat",tab_bird_dn[,label]))
 ggdistrib1 <- ggdistrib1 + labs(fill ="", y = "", x="")
 ggdistrib1
@@ -960,21 +1032,7 @@ BT_prop_hab$proportion <- as.numeric(BT_prop_hab$proportion)
 BT_prop_hab$pourcentage <- percent(BT_prop_hab$proportion, accuracy = 1)
 BT_prop_hab <- subset(BT_prop_hab, BT_prop_hab$pourcentage!= "0%")
 
-
-# representation graphique de la proportion des habitats sur un rayon de 100m autour des lignes basses tensions par ZST (group)
-ggdistrib <- ggplot(data = BT_prop_hab,aes(x = proportion, y = group, fill = habitat))
-ggdistrib <- ggdistrib + geom_bar( colour = NA, stat="identity", position = "fill")
-ggdistrib <- ggdistrib + scale_fill_manual(values = vec_fill)
-ggdistrib <- ggdistrib + labs(fill ="Habitats", y = "", x="")
-ggdistrib <- ggdistrib + geom_text(data = BT_prop_hab, aes(label = pourcentage), size=4, position = position_stack(vjust = 0.5))
-ggdistrib
-ggsave("Rplot/BT_prop_hab1.png",ggdistrib, width = 10, height = 6)
-
-
-
-
-
-##### Proportion habitat ensemble des ZST #######################################################################################################
+# barre de reference: proportion des habitats en dessous des lignes pour l'ensemble des ZST
 # Somme des aires par habitat pour l'ensemble de mes ZST
 area_hab_tot <- aggregate(area_poly~BT_hab$habitat, BT_hab, sum)
 names(area_hab_tot)[1] <- "habitat"
@@ -989,8 +1047,34 @@ area_hab_tot$proportion <- (area_hab_tot$area_poly/area_hab_tot$tot_area)
 area_hab_tot$proportion <- as.numeric(area_hab_tot$proportion)
 area_hab_tot$pourcentage <- percent(area_hab_tot$proportion, accuracy = 1)
 
+#Assemblage des proportions par ZST + proportion ZST totales
+BT_prop_hab_tot <- setDT(area_hab_tot)
+BT_prop_hab_tot <- BT_prop_hab_tot[,-c(2,3)]
+setDT(BT_prop_hab_tot)
+BT_prop_hab_tot[,group := "ZST total"]
+BT_prop_hab_tot[,nb := as.numeric(proportion)]
+BT_prop_hab_tot <- BT_prop_hab_tot %>% relocate(group, .after = habitat)
+BT_prop_hab_tot <- BT_prop_hab_tot %>% relocate(habitat, .after = group)
 
-##### Cartographie DV + LBT #############################################################################################################################
+setcolorder(BT_prop_hab_tot,c("group","habitat","nb"))
+BT_prop_hab_complet <- bind_rows(BT_prop_hab, BT_prop_hab_tot)
+
+
+# representation graphique de la proportion des habitats sur un rayon de 100m autour des lignes basses tensions par ZST (group)
+ggdistrib <- ggplot(data = BT_prop_hab_complet,aes(x = proportion, y = group, fill = habitat))
+ggdistrib <- ggdistrib + geom_bar( colour = NA, stat="identity", position = "fill")
+ggdistrib <- ggdistrib + scale_fill_manual(values = vec_fill, labels = c("Cultures arables", "Forêts de feuillus", "Prairies", "Zones urbaines"))
+ggdistrib <- ggdistrib + labs(fill ="", y = "", x="")
+ggdistrib <- ggdistrib + geom_text(data = BT_prop_hab_complet, aes(label = pourcentage), size=4, position = position_stack(vjust = 0.5))
+ggdistrib
+ggsave("Rplot/BT_prop_hab1.png",ggdistrib, width = 10, height = 6)
+
+
+
+
+
+
+##### Cartographie ZST + LBT #############################################################################################################################
 
 # Zone a securiser en priorite  (zone tampon de 2000 m autour des ZST)
 Buffer_resSup5_sf <- st_buffer(resSup5_sf, dist= 2000)
@@ -1000,7 +1084,10 @@ Buffer_resSup5_sfu <- st_as_sf(Buffer_resSup5_sfu)
 #st_write(Buffer_resSup5_sfu, dsn = "Buffer_resSup5_sfu", layer = "Buffer_resSup5_sfu.shp", driver = "ESRI Shapefile", overwrite_layer = T)
 
 #decoupage sur Qgis pour les lignes BT a securiser en priorité
-LBT_Enedis_risque <- st_read("SIG/Ligne_BT_buf_ZST.shp")
+LBT_Enedis_risque_buf <- st_read("SIG/Ligne_BT_buf_ZST.shp")
+
+#Importation Zone d'activité intense (50% d'UD)
+Zone_act_int <- st_read("SIG/Zone d'activité intense (50% d'UD).shp")
 
 #Cartographie des kernel Disp departement NPDC ZST > 5 sans les point gps mais avec étiquette
 gg <- ggplot()  + theme_bw()
@@ -1019,7 +1106,7 @@ gg
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
 gg <- gg + geom_sf(data = LBT_Enedis, aes(fill = "#1e63e3"), color= "#1e63e3",alpha=.5)
-gg <- gg + geom_sf(data = LBT_Enedis_risque, aes(fill = "#f50000"), color= "#f50000",alpha=1)
+gg <- gg + geom_sf(data = LBT_Enedis_risque_buf, aes(fill = "#f50000"), color= "#f50000",alpha=1)
 gg <- gg +   geom_sf(data = resSup5_sf, aes(color = bird_id, group = group),linewidth =1,fill=NA,alpha = 1)
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
@@ -1058,6 +1145,39 @@ ggsave("Rplot/Carto/zone_a_risque_LBT_buff_n.png",gg, width = 20, height = 11)
 
 
 
+gg <- ggplot()  + theme_bw()
+gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
+gg <- gg + geom_sf(data = Buffer_resSup5_sfu, aes(fill = "#080808"), color = "#080808",linewidth =1,fill=NA,alpha = 1)
+gg <- gg + geom_sf(data = resSup5_sf, aes(fill = "#faa005"), color= NA,alpha= 0.5)
+gg <- gg + geom_sf(data = Zone_act_int, aes(fill = "#b30502"), color= NA,alpha= 0.5)
+gg <- gg + scale_fill_manual("ZST", values = c("#b30502","#faa005", "#080808"),
+                             labels = c("Zone d'acitivité intense (50% d'UD)",
+                                        "Zone d'activité globale (95% d'UD)", 
+                                        "Zone tampon de 2 km"))
+gg
+
+
+gg <- ggplot()  + theme_bw()
+gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
+gg <- gg + geom_sf(data = resSup5_sf, aes(fill = "#faa005"), color= NA,alpha= 0.5)
+gg <- gg + geom_sf(data = Zone_act_int, aes(fill = "#b30502"), color= NA,alpha= 0.5)
+gg <- gg + geom_sf(data = Buffer_resSup5_sfu, aes(fill = "#080808"), color = "#080808",linewidth =1,fill=NA,alpha = 1)
+gg <- gg + geom_sf(data = LBT_Enedis, aes(fill = "#1e63e3"), color= "#1e63e3",alpha=.5)
+gg <- gg + geom_sf(data = LBT_Enedis_risque, aes(fill = "#f50000"), color= "#f50000",alpha=0.5)
+gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",colour= "Zone à sécuriser en priorité" ,title="Zone à sécuriser en priorité")
+gg <- gg + scale_fill_manual("ZST", values = c("#b30502","#faa005", "#080808"),
+                             labels = c("Zone d'acitivité intense (50% d'UD)",
+                                        "Zone d'activité globale (95% d'UD)",
+                                        "Zone tampon de 2 km"))
+gg <- gg + scale_fill_manual("Pression de fragmentation", values = c("#1e63e3","#f50000"),
+                             labels = c("Ligne électrique Enedis", "Ligne électrique Enedis à risque"))
+gg
+ggsave("Rplot/Carto/zone_a_securiser.png",gg, width = 20, height = 11)
+
+
+gg <- gg + geom_sf(data = resSup5_sf, aes(fill = "#faa005"), color= NA,alpha= 0.5)
 
 
 
@@ -1098,80 +1218,123 @@ tab_glmm_i[,area_poly := as.numeric(area)]
 tab_glmm_i[,area_poly_st := scale(area)]
 
 
+
+hist(tab_glmm_i$occurence)
 # glmm de ref dans le rapport ziformula = day_night
 ##library(glmm)
 library(glmmTMB)
 library(glmm)
+library(DHARMa)
+library(ggeffects)
 
 
-glmm <- glmm( occurence ~ habitat * day_night + area + (1| group) + (1|bird_id),family = "nbinom2", data=tab_glmm_i)
-
-
-
-# Original model
-glmm <- glmm(occurence~ area_poly_st + habitat*day_night +  (1|group) + (1|bird_id),
-                family = "poisson", data=tab_glmm_i)
-sglmm <- summary(glmm)
-print(sglmm)
-simulationOutput <- simulateResiduals(fittedModel = glmm, plot = F)
-testZeroInflation(simulationOutput)
-plot(simulationOutput)
-
-
-
-
-
-
-
-
-
-glmm1 <- glmmTMB(occurence~habitat * day_night + (1|group) + (1|bird_id),
+#tres bien
+glmm1 <- glmmTMB(occurence~habitat * day_night + (1|group) + (1|bird_id), ziformula = ~day_night,
                  family = "poisson", data=tab_glmm_i)
 sglmm1 <- summary(glmm1)
 print(sglmm1)
 
+ggpred <- ggpredict(glmm1,terms = c("habitat","day_night"))
+print(ggpred)
+plot(ggpred)
+
+#verification des conditions d'application
+sim_glm <- simulateResiduals(glmm1)
+testResiduals(sim_glm)
+plot(sim_glm)
 
 
-# Model without an interaction
-glmm2 <- glmmTMB(occurence~ area_poly_st + habitat + day_night + (1|group) + (1|bird_id),
-                 family = "poisson", data=tab_glmm_i)
+
+# top 
+glmm2 <- glmmTMB(occurence~habitat * day_night + area_poly_st + (1|group) + (1|bird_id), ziformula = ~day_night,
+                 family = "nbinom2", data=tab_glmm_i)
 sglmm2 <- summary(glmm2)
 print(sglmm2)
+
+ggpred <- ggpredict(glmm2,terms = c("habitat","day_night"))
+print(ggpred)
+plot(ggpred)
+
+#verification des conditions d'application
+sim_glm <- simulateResiduals(glmm2)
+testResiduals(sim_glm)
+plot(sim_glm)
+
+
+
+
+# bien mais moins bien que glmm2
+glmm3 <- glmmTMB(occurence~habitat * day_night + (1|group) + (1|bird_id),
+                 family = "nbinom2", data=tab_glmm_i)
+sglmm3 <- summary(glmm3)
+print(sglmm3)
+
+ggpred <- ggpredict(glmm3,terms = c("habitat","day_night"))
+print(ggpred)
+plot(ggpred)
+
+#verification des conditions d'application
+sim_glm <- simulateResiduals(glmm2)
+testResiduals(sim_glm)
+plot(sim_glm)
+
+
+
+
+
+
+
+
+
+
+
+glmm3 <- glmm(occurence~habitat * day_night + (1|group) + (1|bird_id), family = "nbinom2", data=tab_glmm_i)
+sglmm3 <- summary(glmm3)
+print(sglmm3)
+
 
 
 
 # Likelihood ratio test
-anova(glmm, glmm2, test="LRT")
+anova(glmm1, glmm2, test="LRT")
 
 ## model with interaction is significantly better than without
 
 
 # Effet des rats sur la présence des courlis sur chaque habitats
-library(ggeffects)
-ggpred <- ggpredict(glmm,terms = c("habitat","rats","day_night"))
-print(ggpred)
-plot(ggpred)
 
-
-ggpred <- ggpredict(glmm,terms = c("habitat"))
-print(ggpred)
-plot(ggpred)
 
 ## pour interaction pent mais ici ne fonctinne pas
 ## library(effects)
 ## plot(predictorEffects(glmm))
 
+fisher.test(tab_glmm_i$habitat, tab_glmm_i$day_night)
 
 library(multcomp)
-summary(glht(glmm2))
+summary(glht(glmm1))
 # Histogrammes des occurrences
 
 
-TukeyHSD(aov(occurence~ habitat*day_night + rats*day_night ,data=tab_glmm_i[habitat != "mudflat",]))
+TukeyHSD(aov(occurence~ habitat*day_night, data=tab_glmm_i))
 
-tuk <- TukeyHSD(aov(occurence~ habitat,data=tab_glmm_i[habitat != "mudflat",]))
+tuk <- TukeyHSD(aov(occurence~ habitat,data=tab_glmm_i))
 plot(tuk)
 
+ggsave("Rplot/tuk.png",tuk_plot, width = 20, height = 11)
 
 
 
+
+
+#glmm <- glmm( occurence ~ habitat * day_night + area + (1| group) + (1|bird_id),family = "nbinom2", data=tab_glmm_i)
+
+
+
+# Original model
+#glmm <- glmm(occurence~ area_poly_st + habitat*day_night +  (1|group) + (1|bird_id),
+#family = "poisson", data=tab_glmm_i)
+#sglmm <- summary(glmm)
+#print(sglmm)
+simulationOutput <- simulateResiduals(fittedModel = glmm1, plot = F)
+testZeroInflation(simulationOutput)
+plot(simulationOutput)
