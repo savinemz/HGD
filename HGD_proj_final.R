@@ -20,7 +20,7 @@ setwd("C:/Git/HGD")
 ### Data HGD #########################################################################################################################################
 
 #Importation des donnees
-data_HGD_original <- read.csv2("data_HGD_W2.csv", head = T, sep = ";", stringsAsFactors = T)
+data_HGD_original <- read.csv2("data_HGD.csv", head = T, sep = ";", stringsAsFactors = T)
 str(data_HGD_original)
 summary(data_HGD_original)
 plot(data_HGD_original$Affichage)
@@ -682,7 +682,7 @@ gg <- gg + geom_sf(data = resSup5_sf, aes(color = bird_id, group = group),linewi
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="Identifiant Grand-duc",title="Répartition géographique des localisations GPS dans le Nord et le Pas-de-Calais")
-#gg <- gg + geom_label_repel(data = resSup5_sf, aes(label = group, geometry = geometry), stat = "sf_coordinates", min.segment.length = 0,colour = "black",segment.colour = "black")
+gg <- gg + geom_label_repel(data = resSup5_sf, aes(label = group, geometry = geometry), stat = "sf_coordinates", min.segment.length = 0,colour = "black",segment.colour = "black")
 gg <- gg + scale_fill_manual("Paysage", values = c("#41CC76","#BD9B95"),labels = c("Trame Verte", "Bassin minier"))
 gg <- gg + theme (legend.title = element_text(size = 15), legend.text = element_text(size = 13))
 gg
@@ -897,7 +897,7 @@ area_habitat <- aggregate(area~habitat, hab, sum)
 area_habitat$proportion <- area_habitat$area/sum(area_habitat$area)
 area_habitat <- area_habitat[,-c(2)]
 setDT(area_habitat)
-area_habitat[,bird_id := "ZST habitat"]
+area_habitat[,bird_id := "ZST TOTAL"]
 area_habitat[,nb := as.numeric(proportion)]
 
 setcolorder(area_habitat,c("bird_id","habitat","nb"))
@@ -976,15 +976,6 @@ ggdistrib1
 
 ggsave("Rplot/ggdistribx.png",ggdistrib1, width = 10, height = 5)
 
-ggdistrib2 <- ggplot(data = tab_daynight,aes(x = nb, y = bird_id, fill = habitat))+facet_grid(.~day_night)
-ggdistrib2 <- ggdistrib2 + geom_bar( colour = NA, stat="identity", position = "fill")
-ggdistrib2 <- ggdistrib2 + scale_fill_manual(values = vec_fill)
-#ggdistrib2 <- ggdistrib2 + scale_y_discrete(breaks = c("ZST habitat", tab_bird_dn[,bird_id]),labels= c("ZST habitat", tab_bird_dn[,label]))
-ggdistrib2 <- ggdistrib2 + labs(fill ="", y = "", x="")
-ggdistrib2
-
-
-
 
 
 
@@ -1051,7 +1042,7 @@ area_hab_tot$pourcentage <- percent(area_hab_tot$proportion, accuracy = 1)
 BT_prop_hab_tot <- setDT(area_hab_tot)
 BT_prop_hab_tot <- BT_prop_hab_tot[,-c(2,3)]
 setDT(BT_prop_hab_tot)
-BT_prop_hab_tot[,group := "ZST total"]
+BT_prop_hab_tot[,group := "ZST TOTAL"]
 BT_prop_hab_tot[,nb := as.numeric(proportion)]
 BT_prop_hab_tot <- BT_prop_hab_tot %>% relocate(group, .after = habitat)
 BT_prop_hab_tot <- BT_prop_hab_tot %>% relocate(habitat, .after = group)
@@ -1088,6 +1079,18 @@ LBT_Enedis_risque_buf <- st_read("SIG/Ligne_BT_buf_ZST.shp")
 
 #Importation Zone d'activité intense (50% d'UD)
 Zone_act_int <- st_read("SIG/Zone d'activité intense (50% d'UD).shp")
+
+#Carte simple du reseau MT
+gg <- ggplot()  + theme_bw()
+gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
+gg <- gg + geom_sf(data = LBT_Enedis, aes(fill = "#1e63e3"), color= "#1e63e3",alpha=.5)
+gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + scale_fill_manual("", values = c("#1e63e3"),labels = c("Réseau électrique Moyenne Tension"))
+gg <- gg + theme (legend.position = 'bottom', legend.title = element_text(size = 15), legend.text = element_text(size = 13))
+gg
+
+ggsave("Rplot/Carto/reseau_moyenne_tension.png",gg, width = 20, height = 11)
 
 #Cartographie des kernel Disp departement NPDC ZST > 5 sans les point gps mais avec étiquette
 gg <- ggplot()  + theme_bw()
@@ -1228,7 +1231,7 @@ library(DHARMa)
 library(ggeffects)
 
 
-#tres bien
+#bof pour l'AIC
 glmm1 <- glmmTMB(occurence~habitat * day_night + (1|group) + (1|bird_id), ziformula = ~day_night,
                  family = "poisson", data=tab_glmm_i)
 sglmm1 <- summary(glmm1)
@@ -1261,36 +1264,6 @@ testResiduals(sim_glm)
 plot(sim_glm)
 
 
-
-
-# bien mais moins bien que glmm2
-glmm3 <- glmmTMB(occurence~habitat * day_night + (1|group) + (1|bird_id),
-                 family = "nbinom2", data=tab_glmm_i)
-sglmm3 <- summary(glmm3)
-print(sglmm3)
-
-ggpred <- ggpredict(glmm3,terms = c("habitat","day_night"))
-print(ggpred)
-plot(ggpred)
-
-#verification des conditions d'application
-sim_glm <- simulateResiduals(glmm2)
-testResiduals(sim_glm)
-plot(sim_glm)
-
-
-
-
-
-
-
-
-
-
-
-glmm3 <- glmm(occurence~habitat * day_night + (1|group) + (1|bird_id), family = "nbinom2", data=tab_glmm_i)
-sglmm3 <- summary(glmm3)
-print(sglmm3)
 
 
 
