@@ -1258,14 +1258,72 @@ ggpred <- ggpredict(glmm2,terms = c("habitat","day_night"))
 print(ggpred)
 plot(ggpred)
 
+
+
+
+# top
+library(glmm)
+glmm2 <- glmmTMB(occurence~habitat * day_night + area_poly_st + (1|group) + (1|bird_id),
+                 family = "nbinom2", data=tab_glmm_i)
+sglmm2 <- summary(glmm2)
+print(sglmm2)
+
+ggpred <- ggpredict(glmm2,terms = c("habitat","day_night"))
+print(ggpred)
+plot(ggpred)
+
+
 #verification des conditions d'application
 sim_glm <- simulateResiduals(glmm2)
 testResiduals(sim_glm)
 plot(sim_glm)
 
 
+#(Intercept) ***
+exp(1.933009)
+# exp(1.933009) = 6.910272
+# 6.910272 occurence en moyenne le jour pour mon habitat de référence qui est l'habitat culture arable
+
+#habitatforets_coniferes 
+exp(1.933009 + (0.157624))
+# exp(1.933009 + (0.157624)) = 8.090035 occurence en moyenne le jour pour une foret de conifères
+
+# habitatforets_feuillus ***
+exp(1.933009 + (1.410378))
+# exp(1.933009 + (1.410378)) = 28.31487 occurence en moyenne le jour pour une foret de feuillus
 
 
+#habitatprairie .
+exp(1.933009 + (-0.454998))
+# exp(1.933009 + (-0.454998)) = 4.384217 occurence en moyenne le jour pour une prairie
+
+# habitaturbain ***
+exp(1.933009 + (-3.488356)) 
+# exp(1.933009 + (-3.488356)) = 0.2111161 occurence en moyenne le jour pour l'habitat urbain
+
+#day_nightNuit ***
+exp(1.933009 + (1.435395))
+# exp(1.933009 + (1.435395)) = 29.03215 occurence en moyenne la nuit pour l'habitat culture arable
+
+#area_poly_st ***
+exp(1.933009 + (0.671318))
+# à chaque fois que l'aire augmente de 1, l'abondance est multipliée par exp(1.933009 + (0.671318)) = 13.52212
+
+#habitatforets_coniferes:day_nightNuit .
+exp(1.933009 + (-2.350049))
+# exp(1.933009 + (-2.350049)) = 0.6589946 occurence en moyenne la nuit pour l'habitat foret de conifères
+
+#habitatforets_feuillus:day_nightNuit ***
+exp(1.933009 + (-1.603377))
+# exp(1.933009 + (-1.603377)) = 1.390456 occurence en moyenne la nuit pour l'habitat foret de feuillus
+
+#habitatprairie:day_nightNuit
+exp(1.933009 + (-0.092701))
+# exp(1.933009 + (-0.092701)) = 6.298478 occurence en moyenne la nuit pour l'habitat prairie
+
+#habitaturbain:day_nightNuit
+exp(1.933009 + (-0.003576))
+# exp(1.933009 + (-0.003576)) = 6.885605 occurence en moyenne la nuit pour l'habitat urbain
 
 
 # Likelihood ratio test
@@ -1308,6 +1366,6 @@ ggsave("Rplot/tuk.png",tuk_plot, width = 20, height = 11)
 #family = "poisson", data=tab_glmm_i)
 #sglmm <- summary(glmm)
 #print(sglmm)
-simulationOutput <- simulateResiduals(fittedModel = glmm1, plot = F)
+simulationOutput <- simulateResiduals(fittedModel = glmm2, plot = F)
 testZeroInflation(simulationOutput)
 plot(simulationOutput)
