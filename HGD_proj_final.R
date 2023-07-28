@@ -20,7 +20,7 @@ setwd("C:/Git/HGD")
 ### Data HGD #########################################################################################################################################
 
 #Importation des donnees
-data_HGD_original <- read.csv2("data_HGD.csv", head = T, sep = ";", stringsAsFactors = T)
+data_HGD_original <- read.csv2("data_HGD.csv", head = T, sep = ";", stringsAsFactors = T)# certains points aberrants ont été enlevés dans l'excel (oiseaux morts)
 str(data_HGD_original)
 summary(data_HGD_original)
 plot(data_HGD_original$Affichage)
@@ -71,7 +71,7 @@ boxplot(data_HGD$satcount)
 summary(data_HGD)
 
 
-#selection des hdop = précision vur l'horizontalite du point (0,8 < hdop < 1.3)
+#selection des hdop = précision Sur l'horizontalite du point (0,8 < hdop < 1.3)
 #plus le hdop est proche de 1 mieux c'est
 data_HGD <- filter(data_HGD,hdop > 0.79)
 data_HGD <- filter(data_HGD,hdop < 1.31)
@@ -83,7 +83,7 @@ summary(data_HGD$hdop)
 data_HGD$heure_HH <- substr(data_HGD$time,1,2)
 data_HGD$date_HH <- paste0(data_HGD$date, "_", data_HGD$heure_HH)
 
-#importation des donnees sur le jour de depart de chaque oiseau
+#importation des donnees sur le jour de depart de chaque oiseau (visuellement au point près (voir excel à part) sur la viosionneuse ornitrack)
 data_depart <- read.csv("Date_de_depart.csv", head = T, sep = ";", stringsAsFactors = T)
 data_HGD <- merge(data_HGD, data_depart, by = "bird_id")
 data_HGD <- data_HGD %>% relocate(date_depart, .after = time)
@@ -263,12 +263,12 @@ Trame_verte_sf <- st_make_valid(Trame_verte_sf)
 Trame_verte_sf <- st_as_sf(Trame_verte_sf)
 
 
-# Ligne electrique basse tension Enedis
+# Ligne electrique moyenne tension Enedis
 LBT_Enedis <- st_read("SIG/LBT_Enedis.shp")
 
 
 
-# Ligne electrique basse tension Enedis a risque
+# Ligne electrique moyenne tension Enedis a risque
 LBT_Enedis_risque <- st_read("SIG/LBT_Enedis_risque.shp")
 LBT_Enedis_risque <- st_read("SIG/Ligne_BT_buf_ZST.shp")
 
@@ -280,15 +280,33 @@ aire_2022_sf <- st_make_valid(aire_2022)
 
 # Cartographie generale #####################################################################################################################
 # Repartition geographique des points gps NPDC avec BM + TV
-gg <- ggplot()  + theme_bw()
+gg <- ggplot() + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
-#gg <- gg + geom_sf(data = Bassin_minier, fill = "#bd9b95", color= NA,alpha=.5) + labs(fill = "Bassin minier")
-#gg <- gg + geom_sf(data = Trame_verte_sf, fill = "#41cc76", color= NA,alpha= 0.5)
+gg <- gg + geom_sf(data = Bassin_minier, aes(fill = "#BD9B95"), color= NA,alpha=.5)
+gg <- gg + geom_sf(data = Trame_verte_sf, aes(fill = "#41CC76"), color= NA,alpha= 0.5)
 gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.5)
-gg <- gg + geom_sf(data = aire_2022_sf,aes(colour= bird_id), shape = 2, size = 5, fill = "white", alpha = 1)
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour="Identifiant Grand-duc",title="Répartition géographique des localisations GPS dans le Nord et le Pas-de-Calais")
+gg <- gg + scale_fill_manual("Paysage", values = c("#41CC76","#BD9B95"),labels = c("Trame Verte", "Bassin minier"))
+gg <- gg + theme (legend.title = element_text(size = 15), legend.text = element_text(size = 13))
+gg
+ggsave("Rplot/Carto/loc_bird.png",gg, width = 20, height = 11)
+
+
+
+
+#test ajout des aire de nidification
+gg <- ggplot() + theme_bw()
+gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
+gg <- gg + geom_sf(data = Bassin_minier, aes(fill = "#BD9B95"), color= NA,alpha=.5)
+gg <- gg + geom_sf(data = Trame_verte_sf, aes(fill = "#41CC76"), color= NA,alpha= 0.5)
+gg <- gg + geom_sf(data = Disp_HGD_sf,aes(group=bird_id,colour= bird_id),linewidth =0.5)
+gg <- gg + geom_sf(data = aire_2022_sf,aes(colour= bird_id), size = 6, alpha = 1) + labs (colour = "Aires de nidification HGD")
+gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + labs(x="",y="",colour="Identifiant Grand-duc",title="Répartition géographique des localisations GPS dans le Nord et le Pas-de-Calais")
+gg <- gg + scale_fill_manual("Paysage", values = c("#41CC76","#BD9B95"),labels = c("Trame Verte", "Bassin minier"))
 gg <- gg + theme (legend.title = element_text(size = 15), legend.text = element_text(size = 13))
 gg
 ggsave("Rplot/Carto/loc_birdtest.png",gg, width = 20, height = 11)
@@ -297,11 +315,14 @@ ggsave("Rplot/Carto/loc_birdtest.png",gg, width = 20, height = 11)
 
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
-gg <- gg + geom_sf(data = aire_2022_sf,aes(colour= bird_id), shape = 7, size = 3, alpha = 1)
+gg <- gg + geom_sf(data = aire_2022_sf,aes(colour= bird_id), size = 6, alpha = 1) + labs (colour = "Aires de nidification HGD")
 gg
+ggsave("Rplot/Carto/aire_nidif_2022.png",gg, width = 20, height = 11)
 
 
-# Repartition geographique des points gps NPDC avec LBT
+
+
+# Repartition geographique des points gps NPDC avec LMT (ligne moyenne tension)
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
 gg <- gg + geom_sf(data = LBT_Enedis, fill = "#1e63e3", color= "#1e63e3",alpha=.5) 
@@ -492,7 +513,7 @@ DV_Disp <- st_transform(DV_Disp,crs=2154)
 
 
 #Croisement de mes DV avec les points pour récupérer les dates
-# liste unique des oiseaux
+# liste unique des oiseaux pour prendre en compte les points a l'intersection de 2 domaines vitaux
 list_oiseaux = unique(Disp_HGD_sf$bird_id)
 
 res = lapply(list_oiseaux, function(x) {
@@ -813,11 +834,11 @@ DV_Disp50 <- st_transform(DV_Disp50,crs=2154)
 
 
 #### Selection des habitats J/N ################################################################################################
-### Data Habitat ##################################################################################################################################
+##### Data Habitat ##################################################################################################################################
 
 #calculs des surfaces par polygones
 CLC <- st_read("SIG/CLC_HDF_2018.shx", stringsAsFactors = T)
-CLC_code <- read.csv2("code_habitat.csv", head = T, sep = ";", stringsAsFactors = T)
+CLC_code <- read.csv2("code_habitat.csv", head = T, sep = ";", stringsAsFactors = T) #fait manuellement, correspondance code habitat
 CLC <- merge(CLC, CLC_code, by = "code_18")
 CLC <- st_transform(CLC,crs=2154)#transformation des donnees
 summary(CLC)
@@ -837,7 +858,7 @@ summary(hab)
 #st_write(hab, dsn = "hab", layer = "hab.shp", driver = "ESRI Shapefile", overwrite_layer = T)
 
 #Assemblage des couches habitats + points GPS HGD
-# liste unique de tes oiseaux
+# liste unique de tes oiseaux pour prendre en compte les points a l'intersection de 2 domaines vitaux
 list_oiseaux2 = unique(Disp_HGD_sf$bird_id)
 
 sum_loc = lapply(list_oiseaux2, function(x) {
@@ -871,12 +892,12 @@ d_gg <- hab_DT[,.(prop_mean = mean(proportion),prop_med = median(proportion),inf
 
 
 # Figure comparaison des habitats composant les motus occupes et non occupes
-library(ggplot2); library(units)
-gg <- ggplot(data = d_gg, aes(x = habitat, y = prop_mean,fill = occupation,colour=occupation,group=occupation))
-gg <- gg + geom_errorbar(aes(ymin = inf95, ymax = sup95),width = 0.5,alpha=.5,linewidth=1)
-gg <- gg +  geom_point(alpha=.8,size=2)
-gg <- gg + labs(y = "Proportion mean", x = "Habitats")
-gg
+#library(ggplot2); library(units)
+#gg <- ggplot(data = d_gg, aes(x = habitat, y = prop_mean,fill = occupation,colour=occupation,group=occupation))
+#gg <- gg + geom_errorbar(aes(ymin = inf95, ymax = sup95),width = 0.5,alpha=.5,linewidth=1)
+#gg <- gg +  geom_point(alpha=.8,size=2)
+#gg <- gg + labs(y = "Proportion mean", x = "Habitats")
+#gg
 
 
 
@@ -897,7 +918,7 @@ area_habitat <- aggregate(area~habitat, hab, sum)
 area_habitat$proportion <- area_habitat$area/sum(area_habitat$area)
 area_habitat <- area_habitat[,-c(2)]
 setDT(area_habitat)
-area_habitat[,bird_id := "ZST TOTAL"]
+area_habitat[,bird_id := "ZST TOTAL*"]
 area_habitat[,nb := as.numeric(proportion)]
 
 setcolorder(area_habitat,c("bird_id","habitat","nb"))
@@ -970,7 +991,7 @@ tab_bird_dn[,label := paste0(bird_id," (",Jour," , ",Nuit,")")]
 ggdistrib1 <- ggplot(data = tab_daynight,aes(x = nb, y = bird_id, fill = habitat))+facet_grid(.~day_night)
 ggdistrib1 <- ggdistrib1 + geom_bar( colour = NA, stat="identity", position = "fill")
 ggdistrib1 <- ggdistrib1 + scale_fill_manual(values = vec_fill, labels = c("Cultures arables", "Forêts de conifères", "Forêts de feuillus", "Prairies", "Zones urbaines"))
-#ggdistrib <- ggdistrib1 + scale_y_discrete(breaks = c("habitat_DV", "habitat",tab_bird_dn[,bird_id]),labels= c("habitat_DV", "habitat",tab_bird_dn[,label]))
+#ggdistrib1 <- ggdistrib1 + scale_y_discrete(breaks = c("ZST TOTAL*", "habitat",tab_bird_dn[,bird_id]),labels= c(tab_bird_dn[,label]))
 ggdistrib1 <- ggdistrib1 + labs(fill ="", y = "", x="")
 ggdistrib1
 
@@ -1042,7 +1063,7 @@ area_hab_tot$pourcentage <- percent(area_hab_tot$proportion, accuracy = 1)
 BT_prop_hab_tot <- setDT(area_hab_tot)
 BT_prop_hab_tot <- BT_prop_hab_tot[,-c(2,3)]
 setDT(BT_prop_hab_tot)
-BT_prop_hab_tot[,group := "ZST TOTAL"]
+BT_prop_hab_tot[,group := "ZST TOTAL*"]
 BT_prop_hab_tot[,nb := as.numeric(proportion)]
 BT_prop_hab_tot <- BT_prop_hab_tot %>% relocate(group, .after = habitat)
 BT_prop_hab_tot <- BT_prop_hab_tot %>% relocate(habitat, .after = group)
@@ -1092,96 +1113,58 @@ gg
 
 ggsave("Rplot/Carto/reseau_moyenne_tension.png",gg, width = 20, height = 11)
 
-#Cartographie des kernel Disp departement NPDC ZST > 5 sans les point gps mais avec étiquette
+
+#le mieux
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
-gg <- gg + geom_sf(data = LBT_Enedis, aes(fill = "#1e63e3"), color= "#1e63e3",alpha=.5)
-gg <- gg + geom_sf(data = LBT_Enedis_risque, aes(fill = "#f50000"), color= "#f50000",alpha=.5)
-gg <- gg +   geom_sf(data = resSup5_sf, aes(fill = "#080808"), fill = NA, linewidth =1,alpha = 1)
+gg <- gg + geom_sf(data = LBT_Enedis, aes(color = "#1e63e3"),alpha=.5)
+gg <- gg + geom_sf(data = LBT_Enedis_risque, aes(color = "#f50000"),alpha=1)
+gg <- gg + geom_sf(data = Buffer_resSup5_sfu, aes(fill = "#080808"), color = "#080808",linewidth =1,fill=NA,alpha = 1)
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour= "ZST Grand-duc" ,title="Zone à sécuriser en priorité")
-gg <- gg + scale_fill_manual("VDM", values = c("#080808"),labels = c("Zone à sécuriser en priorité"))
-gg <- gg + scale_fill_manual("PB électrocution", values = c("#1e63e3","#f50000"),labels = c("Ligne électrique Enedis", "Ligne électrique Enedis à risque"))
+gg <- gg + labs(x="",y="",colour= "" ,title="Zone à sécuriser en priorité")
+gg <- gg + scale_color_manual(values = c("#1e63e3","#f50000", "#080808"),
+                             labels = c("Réseau électrique Enedis", "Lignes électriques Enedis à risque", "Zone à sécuriser en priorité"))
+gg <- gg + theme (legend.position = 'bottom', legend.title = element_text(size = 15), legend.text = element_text(size = 13))
 gg
+ggsave("Rplot/Carto/zone_a_risque_LBT_buff_ludoi.png",gg, width = 20, height = 11)
 
-#le mieux que je sois arrivé à faire
+
+
+#test2
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
-gg <- gg + geom_sf(data = LBT_Enedis, aes(fill = "#1e63e3"), color= "#1e63e3",alpha=.5)
-gg <- gg + geom_sf(data = LBT_Enedis_risque_buf, aes(fill = "#f50000"), color= "#f50000",alpha=1)
-gg <- gg +   geom_sf(data = resSup5_sf, aes(color = bird_id, group = group),linewidth =1,fill=NA,alpha = 1)
-gg <- gg + annotation_scale()
-gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour= "Identifiant Grand-duc" ,title="Zone à sécuriser en priorité")
-gg <- gg + scale_fill_manual("Pression de fragmentation", values = c("#1e63e3","#f50000"),labels = c("Ligne électrique Enedis", "Ligne électrique Enedis à risque"))
-gg
-ggsave("Rplot/Carto/zone_a_risque_LBT.png",gg, width = 20, height = 11)
-
-
-gg <- ggplot()  + theme_bw()
-gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
-gg <- gg + geom_sf(data = LBT_Enedis, aes(fill = "#1e63e3"), color= "#1e63e3",alpha=.5)
-gg <- gg + geom_sf(data = LBT_Enedis_risque, aes(fill = "#f50000"), color= "#f50000",alpha=1)
-gg <- gg + geom_sf(data = Buffer_resSup5_sfu, aes(fill = "#080808"),linewidth =1,fill=NA,alpha = 1)
-gg <- gg + annotation_scale()
-gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour= "Zone à sécuriser en priorité" ,title="Zone à sécuriser en priorité")
-gg <- gg + scale_fill_manual("Pression de fragmentation", values = c("#1e63e3","#f50000"),labels = c("Ligne électrique Enedis", "Ligne électrique Enedis à risque"))
-gg
-ggsave("Rplot/Carto/zone_a_risque_LBT_buff.png",gg, width = 20, height = 11)
-
-
-
-
-gg <- ggplot()  + theme_bw()
-gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
-gg <- gg + geom_sf(data = LBT_Enedis, aes(fill = "#1e63e3"), color= "#1e63e3",alpha=.5)
-gg <- gg + geom_sf(data = LBT_Enedis_risque, aes(fill = "#f50000"), color= "#f50000",alpha=1)
+gg <- gg + geom_sf(data = LBT_Enedis, aes(color = "#1e63e3"),alpha=.5)
+gg <- gg + geom_sf(data = LBT_Enedis_risque, aes(color = "#f50000"),alpha=1)
 gg <- gg + geom_sf(data = Buffer_resSup5_sfu, aes(fill = "#080808"), color = "#080808",linewidth =1,fill=NA,alpha = 1)
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
 gg <- gg + labs(x="",y="",colour= "Zone à sécuriser en priorité" ,title="Zone à sécuriser en priorité")
-gg <- gg + scale_fill_manual("Pression de fragmentation", values = c("#1e63e3","#f50000", "#080808"),labels = c("Ligne électrique Enedis", "Ligne électrique Enedis à risque", "Zone à sécuriser en priorité"))
+gg <- gg + scale_color_manual(values = c("#1e63e3","#f50000"),labels = c("Ligne électrique Enedis", "Ligne électrique Enedis à risque"))
+gg <- gg + scale_fill_manual(values = c("#080808"), labels = c("Zone à sécuriser en priorité"))
 gg
-ggsave("Rplot/Carto/zone_a_risque_LBT_buff_n.png",gg, width = 20, height = 11)
+ggsave("Rplot/Carto/zone_a_risque_LBT_buff_ludor.png",gg, width = 20, height = 11)
 
 
 
 gg <- ggplot()  + theme_bw()
 gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
+gg <- gg + geom_sf(data = resSup5_sf, aes(fill = "#FAA005"), color= NA,alpha= 0.5)
+gg <- gg + geom_sf(data = Zone_act_int, aes(fill = "#B30502"), color= NA,alpha= 0.5)
 gg <- gg + geom_sf(data = Buffer_resSup5_sfu, aes(fill = "#080808"), color = "#080808",linewidth =1,fill=NA,alpha = 1)
-gg <- gg + geom_sf(data = resSup5_sf, aes(fill = "#faa005"), color= NA,alpha= 0.5)
-gg <- gg + geom_sf(data = Zone_act_int, aes(fill = "#b30502"), color= NA,alpha= 0.5)
-gg <- gg + scale_fill_manual("ZST", values = c("#b30502","#faa005", "#080808"),
-                             labels = c("Zone d'acitivité intense (50% d'UD)",
-                                        "Zone d'activité globale (95% d'UD)", 
+gg <- gg + geom_sf(data = Buffer_resSup5_sfu, aes(fill = "#080808"), color = NA, alpha = 1, fill = NA, show.legend = "polygon")
+gg <- gg + scale_fill_manual(values = c("#B30502","#FAA005","#080808"),
+                             labels = c("Zone d'activité intense du HGD dans sa ZST (50% d'UD)",
+                                        "Zone d'activité globale du HGD dans sa ZST (95% d'UD)",
                                         "Zone tampon de 2 km"))
-gg
-
-
-gg <- ggplot()  + theme_bw()
-gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
-gg <- gg + geom_sf(data = resSup5_sf, aes(fill = "#faa005"), color= NA,alpha= 0.5)
-gg <- gg + geom_sf(data = Zone_act_int, aes(fill = "#b30502"), color= NA,alpha= 0.5)
-gg <- gg + geom_sf(data = Buffer_resSup5_sfu, aes(fill = "#080808"), color = "#080808",linewidth =1,fill=NA,alpha = 1)
-gg <- gg + geom_sf(data = LBT_Enedis, aes(fill = "#1e63e3"), color= "#1e63e3",alpha=.5)
-gg <- gg + geom_sf(data = LBT_Enedis_risque, aes(fill = "#f50000"), color= "#f50000",alpha=0.5)
+gg <- gg + labs(fill = "")
 gg <- gg + annotation_scale()
 gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
-gg <- gg + labs(x="",y="",colour= "Zone à sécuriser en priorité" ,title="Zone à sécuriser en priorité")
-gg <- gg + scale_fill_manual("ZST", values = c("#b30502","#faa005", "#080808"),
-                             labels = c("Zone d'acitivité intense (50% d'UD)",
-                                        "Zone d'activité globale (95% d'UD)",
-                                        "Zone tampon de 2 km"))
-gg <- gg + scale_fill_manual("Pression de fragmentation", values = c("#1e63e3","#f50000"),
-                             labels = c("Ligne électrique Enedis", "Ligne électrique Enedis à risque"))
+gg <- gg + theme (legend.position = 'bottom', legend.title = element_text(size = 15), legend.text = element_text(size = 13))
+#gg <- gg + geom_label_repel(data = resSup5_sf, aes(label = group, geometry = geometry), stat = "sf_coordinates", min.segment.length = 0,colour = "black",segment.colour = "black")
+gg <- gg + geom_text_repel(point.padding = NA)
 gg
-ggsave("Rplot/Carto/zone_a_securiser.png",gg, width = 20, height = 11)
-
-
-gg <- gg + geom_sf(data = resSup5_sf, aes(fill = "#faa005"), color= NA,alpha= 0.5)
-
+ggsave("Rplot/Carto/zonage_ZST_ss.png",gg, width = 20, height = 11)
 
 
 
@@ -1232,7 +1215,7 @@ library(ggeffects)
 
 
 #bof pour l'AIC
-glmm1 <- glmmTMB(occurence~habitat * day_night + (1|group) + (1|bird_id), ziformula = ~day_night,
+glmm1 <- glmmTMB(occurence~habitat * day_night + area_poly_st + (1|group) + (1|bird_id), ziformula = ~day_night,
                  family = "poisson", data=tab_glmm_i)
 sglmm1 <- summary(glmm1)
 print(sglmm1)
@@ -1261,10 +1244,10 @@ plot(ggpred)
 
 
 
-# top
+# encore plus top
 library(glmm)
 glmm2 <- glmmTMB(occurence~habitat * day_night + area_poly_st + (1|group) + (1|bird_id),
-                 family = "nbinom2", data=tab_glmm_i)
+                 family = "nbinom2", data=tab_glmm_i[bird_id != "Licques",])
 sglmm2 <- summary(glmm2)
 print(sglmm2)
 
@@ -1339,7 +1322,8 @@ anova(glmm1, glmm2, test="LRT")
 ## library(effects)
 ## plot(predictorEffects(glmm))
 
-fisher.test(tab_glmm_i$habitat, tab_glmm_i$day_night)
+kruskal.test(tab_glmm_i$habitat, tab_glmm_i$area_poly_st)
+kruskal.test(tab_glmm_i$area_poly_st, tab_glmm_i$habitat)
 
 library(multcomp)
 summary(glht(glmm1))
