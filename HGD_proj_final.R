@@ -998,6 +998,14 @@ ggdistrib1
 ggsave("Rplot/ggdistribx.png",ggdistrib1, width = 10, height = 5)
 
 
+#test avec le nombre d'occurrence et pas les proportions
+ggdistrib1 <- ggplot(data = tab_daynight,aes(x = nb, y = bird_id, fill = habitat))+facet_grid(.~day_night)
+ggdistrib1 <- ggdistrib1 + geom_bar( colour = NA, stat="identity")
+ggdistrib1 <- ggdistrib1 + scale_fill_manual(values = vec_fill, labels = c("Cultures arables", "Forêts de conifères", "Forêts de feuillus", "Prairies", "Zones urbaines"))
+#ggdistrib1 <- ggdistrib1 + scale_y_discrete(breaks = c("ZST TOTAL*", "habitat",tab_bird_dn[,bird_id]),labels= c(tab_bird_dn[,label]))
+ggdistrib1 <- ggdistrib1 + labs(fill ="", y = "", x="")
+ggdistrib1
+ggsave("Rplot/ggdistribz.png",ggdistrib1, width = 10, height = 5)
 
 
 
@@ -1169,6 +1177,25 @@ ggsave("Rplot/Carto/zonage_ZST_ss.png",gg, width = 20, height = 11)
 
 
 
+gg <- ggplot()  + theme_bw()
+gg <- gg + geom_sf(data = NPDC, size=0.2, alpha=.5)
+gg <- gg + geom_sf(data = resSup5_sf, aes(fill = "#FAA005"), color= NA,alpha= 0.5)
+gg <- gg + geom_sf(data = Zone_act_int, aes(fill = "#B30502"), color= NA,alpha= 0.5)
+gg <- gg + geom_sf(data = Buffer_resSup5_sfu, aes(fill = "#080808"), color = "#080808",linewidth =1,fill=NA,alpha = 1)
+gg <- gg + scale_fill_manual(values = c("#B30502","#FAA005","#080808"),
+                             labels = c("Zone d'activité intense du HGD dans sa ZST (50% d'UD)",
+                                        "Zone d'activité globale du HGD dans sa ZST (95% d'UD)",
+                                        "Zone tampon de 2 km"))
+gg <- gg + labs(fill = "")
+gg <- gg + annotation_scale()
+gg <- gg + annotation_north_arrow(location = "tr", height = unit(0.7, "cm"), width = unit(0.7, "cm"))
+gg <- gg + theme (legend.position = 'bottom', legend.title = element_text(size = 15), legend.text = element_text(size = 13))
+#gg <- gg + geom_label_repel(data = resSup5_sf, aes(label = group, geometry = geometry), stat = "sf_coordinates", min.segment.length = 0,colour = "black",segment.colour = "black")
+gg <- gg + geom_text_repel(point.padding = NA)
+gg
+
+
+
 ### GLMM #######################################################################################################################################
 sum_loc_DV <- sum_loc [,.(occurence =.N), by =.(objectid, day_night, bird_id)]
 
@@ -1203,7 +1230,7 @@ tab_glmm_i <- merge(sum_loc_DV, hab[,c(1,5,9)], by = "objectid", allow.cartesian
 tab_glmm_i[,area_poly := as.numeric(area)]
 tab_glmm_i[,area_poly_st := scale(area)]
 
-
+tab_glmm <- sum_loc [,.(nb_data = .N), by = .(habitat, day_night)]
 
 hist(tab_glmm_i$occurence)
 # glmm de ref dans le rapport ziformula = day_night
@@ -1247,7 +1274,7 @@ plot(ggpred)
 # encore plus top
 library(glmm)
 glmm2 <- glmmTMB(occurence~habitat * day_night + area_poly_st + (1|group) + (1|bird_id),
-                 family = "nbinom2", data=tab_glmm_i[bird_id != "Licques",])
+                 family = "nbinom2", data=tab_glmm_i)
 sglmm2 <- summary(glmm2)
 print(sglmm2)
 
@@ -1256,6 +1283,8 @@ print(ggpred)
 plot(ggpred)
 
 
+tab_prairie <- filter(tab_glmm_i,habitat == "prairie")
+boxplot(tab_prairie$occurence~tab_prairie$day_night)
 #verification des conditions d'application
 sim_glm <- simulateResiduals(glmm2)
 testResiduals(sim_glm)
